@@ -53,7 +53,7 @@ char *form_filepath ( const char *parent_path, const char *destination_path )
 
 // function to get file_descriptor for said file ( determined by char **order: 0-root, final-file )
 
-int get_file_descriptor ( uint32_t size, const char **strings )
+int get_file_descriptor ( uint32_t size, char **strings, int flags )
 {
   // getting the treasure.data filepath
 
@@ -78,7 +78,7 @@ int get_file_descriptor ( uint32_t size, const char **strings )
     Parameter similar to registers?
   */
 
-  int file_descriptor = open ( filepath, O_RDONLY ); // file descriptor for general treasure file
+  int file_descriptor = open ( filepath, flags ); // file descriptor for general treasure file
 
   free ( filepath );
 
@@ -113,7 +113,33 @@ void list_hunt ( const char hunt_id[HUNT_ID_SIZE] )
   printf ( "Total file size: %lu\n", ( uint64_t ) statbuf.st_size ); // %lu may not work on 32 bit systems as intended; written for 64 bit systems to not get warning
   printf ( "Last time modified: %s\n", ctime ( &statbuf.st_mtime ) ); // converts time into string format
 
-  int file_descriptor = get_file_descriptor ( 3, { ".", hunt_id, TREASURE_GENERAL_FILENAME } );
+  // form char ** to be sent as parameter
+  // done so if specifications change to use nested folders (inside hunt primary folder)
+  // for now, implementation is a bit hardcoded
+
+  char **strings = ( char ** ) malloc ( 3 * sizeof ( char * ) );
+  if ( strings == NULL )
+    {
+      printf ( "Eroare la creare parametru strings pentru filepath\n" );
+      return;
+    }
+
+  strings[0] = ( char * ) malloc ( ( strlen ( "." ) + 1 ) * sizeof ( char ) );
+  strings[1] = ( char * ) malloc ( ( strlen ( hunt_id ) + 1 )* sizeof ( char ) );
+  strings[2] = ( char * ) malloc ( ( strlen ( TREASURE_GENERAL_FILENAME ) + 1 )* sizeof ( char ) );
+
+  if ( strings[0] == NULL || strings[1] == NULL || strings[2] == NULL )
+    {
+      printf ( "Eroare la creare parametru strings pentru filepath\n" );
+      return;
+    }
+
+  // form strings
+  strcpy ( strings[0], "." );
+  strcpy ( strings[1], hunt_id );
+  strcpy ( strings[2], TREASURE_GENERAL_FILENAME );
+
+  int file_descriptor = get_file_descriptor ( 3, strings, O_RDONLY );
 
   if ( file_descriptor < 0 )
     {
@@ -140,6 +166,7 @@ void list_hunt ( const char hunt_id[HUNT_ID_SIZE] )
 	print_treasure ( buffer[i] );
     }
 
+  free ( strings[0] ); free ( strings[1] ); free ( strings[2] ); free ( strings ); 
   close ( file_descriptor );
 
   if ( bytes_read < 0 )
@@ -165,7 +192,33 @@ void view_hunt ( const char hunt_id[HUNT_ID_SIZE], const char treasure_id[TREASU
       return;
     }
 
-  int file_descriptor = get_file_descriptor ( 3, { ".", hunt_id, TREASURE_GENERAL_FILENAME } );
+  // form char ** to be sent as parameter
+  // done so if specifications change to use nested folders (inside hunt primary folder)
+  // for now, implementation is a bit hardcoded
+
+  char **strings = ( char ** ) malloc ( 3 * sizeof ( char * ) );
+  if ( strings == NULL )
+    {
+      printf ( "Eroare la creare parametru strings pentru filepath\n" );
+      return;
+    }
+
+  strings[0] = ( char * ) malloc ( ( strlen ( "." ) + 1 ) * sizeof ( char ) );
+  strings[1] = ( char * ) malloc ( ( strlen ( hunt_id ) + 1 )* sizeof ( char ) );
+  strings[2] = ( char * ) malloc ( ( strlen ( TREASURE_GENERAL_FILENAME ) + 1 )* sizeof ( char ) );
+
+  if ( strings[0] == NULL || strings[1] == NULL || strings[2] == NULL )
+    {
+      printf ( "Eroare la creare parametru strings pentru filepath\n" );
+      return;
+    }
+
+  // form strings
+  strcpy ( strings[0], "." );
+  strcpy ( strings[1], hunt_id );
+  strcpy ( strings[2], TREASURE_GENERAL_FILENAME );
+
+  int file_descriptor = get_file_descriptor ( 3, strings, O_RDONLY );
 
   if ( file_descriptor < 0 )
     {
@@ -191,7 +244,7 @@ void view_hunt ( const char hunt_id[HUNT_ID_SIZE], const char treasure_id[TREASU
       for ( uint32_t i = 0; i < elements_read; i++ )
 	if ( strcmp ( buffer[i].id, treasure_id ) == 0 )
 	  {
-	    print_treaure ( buffer[i] );
+	    print_treasure ( buffer[i] );
 	    
 	  }
     }

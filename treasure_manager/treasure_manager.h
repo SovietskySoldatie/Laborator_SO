@@ -52,7 +52,7 @@ char *form_filepath ( const char *parent_path, const char *destination_path );
 
 // function to get file_descriptor for said file ( determined by char **order: 0-root, final-file )
 
-int get_file_descriptor ( uint32_t size, const char **strings );
+int get_file_descriptor ( uint32_t size, char **strings, int flags );
 
 // list hunt function
 
