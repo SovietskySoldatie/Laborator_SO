@@ -6,6 +6,7 @@
 
 void print_treasure ( TREASURE treasure )
 {
+  printf ( "Starting to print treasure\n" );
   printf ( "\tTreasure ID: %s\n", treasure.id );
   printf ( "\tTreasure user: %s\n", treasure.user_name );
   printf ( "\tTreasure clue: %s\n", treasure.clue_text );
@@ -109,6 +110,8 @@ void list_hunt ( const char hunt_id[HUNT_ID_SIZE] )
       return;
     }
 
+  // printf ( "Got file descriptor\n" );
+
   // getting and printing treasures
 
   TREASURE buffer[TREASURE_BUFFER_SIZE]; // buffer == sectiune stil array din treasures from treasure.data
@@ -117,6 +120,7 @@ void list_hunt ( const char hunt_id[HUNT_ID_SIZE] )
 
   while ( ( bytes_read = read ( file_descriptor, buffer, TREASURE_BUFFER_SIZE * sizeof ( TREASURE ) ) ) > 0 )
     {
+      printf ( "Read %ld bytes\n", bytes_read );
       if ( bytes_read % elements_read ) // a treasure read was incomplete
 	{
 	  printf ( "Treasure read was incomplete\n" );
@@ -366,14 +370,14 @@ void add_treasure ( const char hunt_id[HUNT_ID_SIZE] )
       return;
     }
 
-  int32_t bytes_written = write ( file_descriptor, treasure, sizeof ( TREASURE ) );
+  ssize_t bytes_written = write ( file_descriptor, treasure, sizeof ( TREASURE ) );
 
   close ( file_descriptor );
 
   if ( bytes_written == -1 || bytes_written != sizeof ( TREASURE ) ) // write error 
     {
       printf ( "Error when writing to file\n" );
-      printf ( "Bytes written: %d\n", bytes_written );
+      printf ( "Bytes written: %ld\n", bytes_written );
       free ( treasure );
       return;
     }

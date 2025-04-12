@@ -36,7 +36,7 @@ typedef enum
 
 // treasure buffer reader macro
 
-#define TREASURE_BUFFER_SIZE 20 // number of treasures saved // => 4080 < 4096 bytes read at once
+#define TREASURE_BUFFER_SIZE 20 // number of treasures saved in buffer // => 4080 < 4096 bytes read at once
 
 // treasure macros
 
