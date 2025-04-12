@@ -247,7 +247,7 @@ void view_treasure ( const char hunt_id[HUNT_ID_SIZE], const char treasure_id[TR
       return;
     }
 
-  printf ( "Treasure %s nu a fost gasit\n", treasure_id );
+  printf ( "Nu a fost gasit treasure ID: %s\n", treasure_id );
 }
 
 TREASURE *read_treasure ( void )
@@ -390,7 +390,7 @@ void add_treasure ( const char hunt_id[HUNT_ID_SIZE] )
   strcpy ( strings[1], hunt_id );
   strcpy ( strings[2], TREASURE_GENERAL_FILENAME );
 
-  int file_descriptor = get_file_descriptor ( 3, strings, O_WRONLY | O_CREAT | O_APPEND );
+  int file_descriptor = get_file_descriptor ( 3, strings, O_RDWR | O_CREAT | O_APPEND );
 
   free ( strings[0] ); free ( strings[1] ); free ( strings[2] ); free ( strings );
 
@@ -401,6 +401,44 @@ void add_treasure ( const char hunt_id[HUNT_ID_SIZE] )
       return;
     }
 
+  // check if treasure was already added to file
+
+  TREASURE buffer[TREASURE_BUFFER_SIZE]; // buffer == sectiune stil array din treasures from treasure.data
+  ssize_t bytes_read;
+  uint32_t elements_read;
+
+  lseek ( file_descriptor, 0, SEEK_SET );
+
+  while ( ( bytes_read = read ( file_descriptor, buffer, TREASURE_BUFFER_SIZE * sizeof ( TREASURE ) ) ) > 0 )
+    {
+      if ( bytes_read % sizeof ( TREASURE ) ) // a treasure read was incomplete
+	{
+	  printf ( "Treasure read was incomplete\n" );
+	  close ( file_descriptor );
+	  free ( treasure );
+	  return;
+	}
+      
+      elements_read = bytes_read / sizeof ( TREASURE );
+      for ( uint32_t i = 0; i < elements_read; i++ )
+	if ( strcmp ( buffer[i].id, treasure->id ) == 0 )
+	  {
+	    printf ( "Treasure %s already was added to the file\n", treasure->id );
+	    // print_treasure ( buffer[i] ); // linie folosita pentru debug
+	    free ( treasure );
+	    close ( file_descriptor );
+	    return;
+	  }
+    }
+
+  if ( bytes_read < 0 )
+    {
+      printf ( "Eroare la citire in buffer\n" );
+      free ( treasure );
+      close ( file_descriptor );
+      return;
+    }
+  
   ssize_t bytes_written = write ( file_descriptor, treasure, sizeof ( TREASURE ) );
 
   close ( file_descriptor );
@@ -415,5 +453,5 @@ void add_treasure ( const char hunt_id[HUNT_ID_SIZE] )
 
   free ( treasure );
 
-  printf ( "Treasure added succesfully\n" );
+  printf ( "\nTreasure added succesfully\n" );
 }
