@@ -6,7 +6,7 @@
 
 void print_treasure ( TREASURE treasure )
 {
-  printf ( "Starting to print treasure\n" );
+  printf ( "__________________________________________________\n" );
   printf ( "\tTreasure ID: %s\n", treasure.id );
   printf ( "\tTreasure user: %s\n", treasure.user_name );
   printf ( "\tTreasure clue: %s\n", treasure.clue_text );
@@ -120,12 +120,22 @@ void list_hunt ( const char hunt_id[HUNT_ID_SIZE] )
 
   while ( ( bytes_read = read ( file_descriptor, buffer, TREASURE_BUFFER_SIZE * sizeof ( TREASURE ) ) ) > 0 )
     {
-      printf ( "Read %ld bytes\n", bytes_read );
-      if ( bytes_read % elements_read ) // a treasure read was incomplete
+      // liniile comentate au rol de debug
+      
+      // printf ( "Entered while ( reading bytes ) loop\n" );
+      // printf ( "Read %ld bytes\n", bytes_read );
+
+      
+      // problema aici la aritmetica floats
+      // solved
+      
+      if ( bytes_read % sizeof ( TREASURE ) ) // a treasure read was incomplete
 	{
 	  printf ( "Treasure read was incomplete\n" );
 	  return;
 	}
+      
+      // printf ( "Skipped incomplete treasure read\n" );
       
       elements_read = bytes_read / sizeof ( TREASURE );
       for ( uint32_t i = 0; i < elements_read; i++ )
@@ -200,17 +210,30 @@ void view_treasure ( const char hunt_id[HUNT_ID_SIZE], const char treasure_id[TR
 
   while ( ( bytes_read = read ( file_descriptor, buffer, TREASURE_BUFFER_SIZE * sizeof ( TREASURE ) ) ) > 0 )
     {
-      if ( bytes_read % elements_read ) // a treasure read was incomplete
+      // liniile comentate au rol de debug
+      
+      // printf ( "Entered while ( reading bytes ) loop\n" );
+      // printf ( "Read %ld bytes\n", bytes_read );
+
+      
+      // problema aici la aritmetica floats
+      // solved
+      
+      if ( bytes_read % sizeof ( TREASURE ) ) // a treasure read was incomplete
 	{
 	  printf ( "Treasure read was incomplete\n" );
 	  return;
 	}
+      
+      // printf ( "Skipped incomplete treasure read\n" );
       
       elements_read = bytes_read / sizeof ( TREASURE );
       for ( uint32_t i = 0; i < elements_read; i++ )
 	if ( strcmp ( buffer[i].id, treasure_id ) == 0 )
 	  {
 	    print_treasure ( buffer[i] );
+	    free ( strings[0] ); free ( strings[1] ); free ( strings[2] ); free ( strings );
+	    close ( file_descriptor );
 	    return;
 	  }
     }
@@ -238,12 +261,14 @@ TREASURE *read_treasure ( void )
     }
   
   char ch; // auxiliary char
+  char aux[TREASURE_ID_SIZE];
 
   printf ( "Please insert treasure ID:\n" );
 
   while ( ( ch = fgetc ( stdin ) ) == '\n' ); // clean any '\n' from buffer
 
-  if ( fgets ( treasure->id, TREASURE_ID_SIZE, stdin ) == NULL ) // check fgets for errors
+  // used aux to clear '\n' chars in buffer before reading treasure ID
+  if ( fgets ( aux, TREASURE_ID_SIZE, stdin ) == NULL ) // check fgets for errors
     {
       printf ( "Eroare la citire treasure ID\n" );
       free ( treasure );
@@ -251,6 +276,12 @@ TREASURE *read_treasure ( void )
     }
   else // eliminate possible terminating '\n' char
     {
+      if ( ch != '\n' ) // insert char taken in while condition
+	{
+	  treasure->id[0] = ch;
+	  treasure->id[1] = '\0';
+	  strcat ( treasure->id, aux );
+	}
       if ( treasure->id[strlen ( treasure->id ) - 1] == '\n' )
 	treasure->id[strlen ( treasure->id ) - 1] = '\0';
     }
