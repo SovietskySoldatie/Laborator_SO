@@ -6,6 +6,7 @@
 # ./treasure_manager --view Hunt001 "Treasure 001"
 ./treasure_manager --add Hunt001 < test2.txt
 ./treasure_manager --list Hunt001
+./treasure_manager --view Hunt001 "Treasure 003"
 ./treasure_manager --view Hunt001 "Treasure 001"
 ./treasure_manager --view Hunt001 "Treasure 002"
 ./treasure_manager --add Hunt001 < test3.txt

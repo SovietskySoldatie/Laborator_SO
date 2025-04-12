@@ -15,10 +15,12 @@
   Used macros can be later swapped for more dynamic solutions (especially for strings)
 */
 
-// operations macros
+// operations and command line macros
 
 #define OPERATION_STRING_SIZE 32
 #define OPERATIONS_NUMBER 5
+
+#define COMMAND_LINE_SIZE 128 // worst-case, enough place for expansion of specifications
 
 typedef enum
   {
@@ -29,8 +31,8 @@ typedef enum
 // hunt & path related macros
 
 #define HUNT_ID_SIZE 32 // auxiliary, used later
+#define HUNT_LOG_FILENAME "logs.txt"
 #define TREASURE_GENERAL_FILENAME "treasure.data"
-#define HUNT_LOG_FILENAME "log.txt"
 
 // treasure struct
 
@@ -62,13 +64,17 @@ void print_treasure ( TREASURE treasure );
 
 int get_file_descriptor ( uint32_t size, char **strings, int flags );
 
+// function used to get log_file_descriptor, specific for main()
+
+int get_log_file_descriptor ( const char *hunt_id );
+
 // list hunt function
 
-void list_hunt ( const char hunt_id[HUNT_ID_SIZE] );
+int list_hunt ( const char hunt_id[HUNT_ID_SIZE] );
 
 // view hunt function
 
-void view_treasure ( const char hunt_id[HUNT_ID_SIZE], const char treasure_id[TREASURE_ID_SIZE] );
+int view_treasure ( const char hunt_id[HUNT_ID_SIZE], const char treasure_id[TREASURE_ID_SIZE] );
 
 /*
   add <hunt_id>
@@ -80,13 +86,12 @@ TREASURE *read_treasure ( void );
 
 // function to add treasure to file
 
-void add_treasure ( const char hunt_id[HUNT_ID_SIZE] );
+int add_treasure ( const char hunt_id[HUNT_ID_SIZE] );
 
 // function to remove treasure from hunt
 
-void remove_reasure (  );
+int remove_treasure ( const char hunt_id[HUNT_ID_SIZE], const char treasure_id[TREASURE_ID_SIZE] );
 
 // function to remove hunt
 
-void remove_hunt (  );
-
+int remove_hunt ( const char hunt_id[HUNT_ID_SIZE] );

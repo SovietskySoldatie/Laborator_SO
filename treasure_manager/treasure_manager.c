@@ -53,22 +53,55 @@ int get_file_descriptor ( uint32_t size, char **strings, int flags )
   return file_descriptor;
 }
 
+int get_log_file_descriptor ( const char *hunt_id ) // special case of get_file_descriptor()
+{
+  // form char ** to be sent as parameter for log file
+
+  char **strings = ( char ** ) malloc ( 3 * sizeof ( char * ) );
+  if ( strings == NULL )
+    {
+      printf ( "Eroare la creare parametru strings pentru filepath\n" );
+      return 1;
+    }
+
+  strings[0] = ( char * ) malloc ( ( strlen ( "." ) + 1 ) * sizeof ( char ) );
+  strings[1] = ( char * ) malloc ( ( strlen ( hunt_id ) + 1 ) * sizeof ( char ) );
+  strings[2] = ( char * ) malloc ( ( strlen ( HUNT_LOG_FILENAME ) + 1 ) * sizeof ( char ) );
+
+  if ( strings[0] == NULL || strings[1] == NULL || strings[2] == NULL )
+    {
+      printf ( "Eroare la creare parametru strings pentru filepath\n" );
+      return 1;
+    }
+
+  // form strings
+  strcpy ( strings[0], "." );
+  strcpy ( strings[1], hunt_id );
+  strcpy ( strings[2], HUNT_LOG_FILENAME );
+
+  int log_file_descriptor = get_file_descriptor ( 3, strings, O_WRONLY | O_CREAT | O_APPEND );
+
+  free ( strings[0] ); free ( strings[1] ); free ( strings[2] ); free ( strings );
+
+  return log_file_descriptor;
+}
+
 // list hunt function
 
-void list_hunt ( const char hunt_id[HUNT_ID_SIZE] )
+int list_hunt ( const char hunt_id[HUNT_ID_SIZE] )
 {
   struct stat statbuf;
 
   if ( stat ( hunt_id, &statbuf ) == -1 ) // to make sure there is specified hunt and extract meta-data
     {
       printf ( "Nu a fost gasit hunt ID: %s\n", hunt_id );
-      return;
+      return 0;
     }
 
   if ( !S_ISDIR ( statbuf.st_mode ) ) // to make sure hunt is a folder (correct representation in memory)
     {
       printf ( "%s nu este reprezentat in memorie corect\n", hunt_id );
-      return;
+      return 1;
     }
 
   printf ( "Printing hunt:\n" );
@@ -84,17 +117,17 @@ void list_hunt ( const char hunt_id[HUNT_ID_SIZE] )
   if ( strings == NULL )
     {
       printf ( "Eroare la creare parametru strings pentru filepath\n" );
-      return;
+      return 1;
     }
 
   strings[0] = ( char * ) malloc ( ( strlen ( "." ) + 1 ) * sizeof ( char ) );
-  strings[1] = ( char * ) malloc ( ( strlen ( hunt_id ) + 1 )* sizeof ( char ) );
-  strings[2] = ( char * ) malloc ( ( strlen ( TREASURE_GENERAL_FILENAME ) + 1 )* sizeof ( char ) );
+  strings[1] = ( char * ) malloc ( ( strlen ( hunt_id ) + 1 ) * sizeof ( char ) );
+  strings[2] = ( char * ) malloc ( ( strlen ( TREASURE_GENERAL_FILENAME ) + 1 ) * sizeof ( char ) );
 
   if ( strings[0] == NULL || strings[1] == NULL || strings[2] == NULL )
     {
       printf ( "Eroare la creare parametru strings pentru filepath\n" );
-      return;
+      return 1;
     }
 
   // form strings
@@ -107,7 +140,7 @@ void list_hunt ( const char hunt_id[HUNT_ID_SIZE] )
   if ( file_descriptor < 0 )
     {
       printf ( "Eroare la creare file_descriptor\n" );
-      return;
+      return 1;
     }
 
   // printf ( "Got file descriptor\n" );
@@ -132,7 +165,7 @@ void list_hunt ( const char hunt_id[HUNT_ID_SIZE] )
       if ( bytes_read % sizeof ( TREASURE ) ) // a treasure read was incomplete
 	{
 	  printf ( "Treasure read was incomplete\n" );
-	  return;
+	  return 1;
 	}
       
       // printf ( "Skipped incomplete treasure read\n" );
@@ -148,24 +181,26 @@ void list_hunt ( const char hunt_id[HUNT_ID_SIZE] )
   if ( bytes_read < 0 )
     {
       printf ( "Eroare la citire in buffer\n" );
-      return;
+      return 1;
     }
+
+  return 0;
 }
 
-void view_treasure ( const char hunt_id[HUNT_ID_SIZE], const char treasure_id[TREASURE_ID_SIZE] )
+int view_treasure ( const char hunt_id[HUNT_ID_SIZE], const char treasure_id[TREASURE_ID_SIZE] )
 {
   struct stat statbuf;
 
   if ( stat ( hunt_id, &statbuf ) == -1 ) // to make sure there is specified hunt and extract meta-data
     {
       printf ( "Nu a fost gasit hunt ID: %s\n", hunt_id );
-      return;
+      return 0;
     }
 
   if ( !S_ISDIR ( statbuf.st_mode ) ) // to make sure hunt is a folder (correct representation in memory)
     {
       printf ( "%s nu este reprezentat in memorie corect\n", hunt_id );
-      return;
+      return 1;
     }
 
   // form char ** to be sent as parameter
@@ -176,17 +211,17 @@ void view_treasure ( const char hunt_id[HUNT_ID_SIZE], const char treasure_id[TR
   if ( strings == NULL )
     {
       printf ( "Eroare la creare parametru strings pentru filepath\n" );
-      return;
+      return 1;
     }
 
   strings[0] = ( char * ) malloc ( ( strlen ( "." ) + 1 ) * sizeof ( char ) );
-  strings[1] = ( char * ) malloc ( ( strlen ( hunt_id ) + 1 )* sizeof ( char ) );
-  strings[2] = ( char * ) malloc ( ( strlen ( TREASURE_GENERAL_FILENAME ) + 1 )* sizeof ( char ) );
+  strings[1] = ( char * ) malloc ( ( strlen ( hunt_id ) + 1 ) * sizeof ( char ) );
+  strings[2] = ( char * ) malloc ( ( strlen ( TREASURE_GENERAL_FILENAME ) + 1 ) * sizeof ( char ) );
 
   if ( strings[0] == NULL || strings[1] == NULL || strings[2] == NULL )
     {
       printf ( "Eroare la creare parametru strings pentru filepath\n" );
-      return;
+      return 1;
     }
 
   // form strings
@@ -199,7 +234,7 @@ void view_treasure ( const char hunt_id[HUNT_ID_SIZE], const char treasure_id[TR
   if ( file_descriptor < 0 )
     {
       printf ( "Eroare la creare file_descriptor\n" );
-      return;
+      return 1;
     }
 
   // getting treasures and searching
@@ -222,7 +257,7 @@ void view_treasure ( const char hunt_id[HUNT_ID_SIZE], const char treasure_id[TR
       if ( bytes_read % sizeof ( TREASURE ) ) // a treasure read was incomplete
 	{
 	  printf ( "Treasure read was incomplete\n" );
-	  return;
+	  return 1;
 	}
       
       // printf ( "Skipped incomplete treasure read\n" );
@@ -234,7 +269,7 @@ void view_treasure ( const char hunt_id[HUNT_ID_SIZE], const char treasure_id[TR
 	    print_treasure ( buffer[i] );
 	    free ( strings[0] ); free ( strings[1] ); free ( strings[2] ); free ( strings );
 	    close ( file_descriptor );
-	    return;
+	    return 0;
 	  }
     }
 
@@ -244,10 +279,12 @@ void view_treasure ( const char hunt_id[HUNT_ID_SIZE], const char treasure_id[TR
   if ( bytes_read < 0 )
     {
       printf ( "Eroare la citire in buffer\n" );
-      return;
+      return 1;
     }
 
   printf ( "Nu a fost gasit treasure ID: %s\n", treasure_id );
+
+  return 0;
 }
 
 TREASURE *read_treasure ( void )
@@ -341,7 +378,7 @@ TREASURE *read_treasure ( void )
   return treasure;
 }
 
-void add_treasure ( const char hunt_id[HUNT_ID_SIZE] )
+int add_treasure ( const char hunt_id[HUNT_ID_SIZE] )
 {
   struct stat statbuf;
 
@@ -350,8 +387,20 @@ void add_treasure ( const char hunt_id[HUNT_ID_SIZE] )
       if ( mkdir ( hunt_id, S_IRUSR | S_IWUSR | S_IXUSR ) != 0 ) // create hunt directory // full owner permissions
 	{
 	  printf ( "Could not create hunt ID: %s\n", hunt_id );
-	  return;
+	  return 1;
 	}
+
+      // create ( and immediately close ) log file
+
+      int log_file_descriptor = get_log_file_descriptor ( hunt_id );
+
+      if ( log_file_descriptor < 0 )
+	{
+	  printf ( "Eroare la creare log file for hunt %s\n", hunt_id );
+	  return 1;
+	}
+      
+      close ( log_file_descriptor );
       
       printf ( "Created hunt ID: %s\n", hunt_id );
     }
@@ -361,7 +410,7 @@ void add_treasure ( const char hunt_id[HUNT_ID_SIZE] )
   if ( treasure == NULL )
     {
       printf ( "Eroare la citire treasure\n" );
-      return;
+      return 1;
     }
 
   // form char ** to be sent as parameter
@@ -372,17 +421,17 @@ void add_treasure ( const char hunt_id[HUNT_ID_SIZE] )
   if ( strings == NULL )
     {
       printf ( "Eroare la creare parametru strings pentru filepath\n" );
-      return;
+      return 1;
     }
 
   strings[0] = ( char * ) malloc ( ( strlen ( "." ) + 1 ) * sizeof ( char ) );
-  strings[1] = ( char * ) malloc ( ( strlen ( hunt_id ) + 1 )* sizeof ( char ) );
-  strings[2] = ( char * ) malloc ( ( strlen ( TREASURE_GENERAL_FILENAME ) + 1 )* sizeof ( char ) );
+  strings[1] = ( char * ) malloc ( ( strlen ( hunt_id ) + 1 ) * sizeof ( char ) );
+  strings[2] = ( char * ) malloc ( ( strlen ( TREASURE_GENERAL_FILENAME ) + 1 ) * sizeof ( char ) );
 
   if ( strings[0] == NULL || strings[1] == NULL || strings[2] == NULL )
     {
       printf ( "Eroare la creare parametru strings pentru filepath\n" );
-      return;
+      return 1;
     }
 
   // form strings
@@ -398,7 +447,7 @@ void add_treasure ( const char hunt_id[HUNT_ID_SIZE] )
     {
       printf ( "Eroare la creare file_descriptor\n" );
       free ( treasure );
-      return;
+      return 1;
     }
 
   // check if treasure was already added to file
@@ -416,7 +465,7 @@ void add_treasure ( const char hunt_id[HUNT_ID_SIZE] )
 	  printf ( "Treasure read was incomplete\n" );
 	  close ( file_descriptor );
 	  free ( treasure );
-	  return;
+	  return 1;
 	}
       
       elements_read = bytes_read / sizeof ( TREASURE );
@@ -427,7 +476,7 @@ void add_treasure ( const char hunt_id[HUNT_ID_SIZE] )
 	    // print_treasure ( buffer[i] ); // linie folosita pentru debug
 	    free ( treasure );
 	    close ( file_descriptor );
-	    return;
+	    return 0; // still considered succesful
 	  }
     }
 
@@ -436,7 +485,7 @@ void add_treasure ( const char hunt_id[HUNT_ID_SIZE] )
       printf ( "Eroare la citire in buffer\n" );
       free ( treasure );
       close ( file_descriptor );
-      return;
+      return 1;
     }
   
   ssize_t bytes_written = write ( file_descriptor, treasure, sizeof ( TREASURE ) );
@@ -448,10 +497,22 @@ void add_treasure ( const char hunt_id[HUNT_ID_SIZE] )
       printf ( "Error when writing to file\n" );
       printf ( "Bytes written: %ld\n", bytes_written );
       free ( treasure );
-      return;
+      return 1;
     }
 
   free ( treasure );
 
   printf ( "\nTreasure added succesfully\n" );
+
+  return 0;
+}
+
+int remove_treasure ( const char hunt_id[HUNT_ID_SIZE], const char treasure_id[TREASURE_ID_SIZE] )
+{
+  return 0;
+}
+
+int remove_hunt ( const char hunt_id[HUNT_ID_SIZE] )
+{
+  return 0;
 }
