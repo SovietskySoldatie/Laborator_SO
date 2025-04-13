@@ -86,6 +86,31 @@ int get_log_file_descriptor ( const char *hunt_id, int create_file_flag ) // spe
   else
     log_file_descriptor = get_file_descriptor ( 3, strings, O_WRONLY | O_APPEND );
 
+  // create symlink to log file
+  
+  if ( log_file_descriptor >= 0 && create_file_flag ) // only done if log file created
+    {
+      char hard_filepath[strlen ( "./" ) + HUNT_ID_SIZE + strlen ( HUNT_LOG_FILENAME ) + 3];
+      char sym_filepath[strlen ( SYM_LOG_FILENAME_START ) + HUNT_ID_SIZE + 1]; // string to create filepath for symlink to log hunt
+
+      // form actual filepath
+      
+      strcpy ( hard_filepath, "./" );
+      strcat ( hard_filepath, hunt_id );
+      strcat ( hard_filepath, "/" );
+      strcat ( hard_filepath, HUNT_LOG_FILENAME );
+
+      // form sym filepath
+      
+      strcpy ( sym_filepath, SYM_LOG_FILENAME_START );
+      strcat ( sym_filepath, hunt_id );
+
+      if ( symlink ( hard_filepath, sym_filepath ) != 0 ) // create symlink // check for errors
+	{
+	  printf ( "Eroare la creare symbolic link to log file\n" );
+	}
+    }
+
   free ( strings[0] ); free ( strings[1] ); free ( strings[2] ); free ( strings );
 
   return log_file_descriptor;
@@ -739,7 +764,20 @@ int remove_hunt ( const char hunt_id[HUNT_ID_SIZE] )
   // + 4 to include '.', '/' and '\0'
   // TREASURE_GENERAL_FILENAME has more chars than HUNT_LOG_FILENAME
 
-  // start with log file
+  // start with log file symbolic link
+
+  char sym_filepath[strlen ( SYM_LOG_FILENAME_START ) + HUNT_ID_SIZE + 1]; // string to create filepath for symlink to log hunt
+  
+  strcpy ( sym_filepath, SYM_LOG_FILENAME_START );
+  strcat ( sym_filepath, hunt_id );
+
+  if ( unlink ( sym_filepath ) != 0 ) // check for errors
+    {
+      printf ( "Eroare la stergere log file link\n" );
+      return 1;
+    }
+
+  // repeat for log file proper
   // prefer to lose log file rather than data file
 
   strcpy ( filepath, "." );

@@ -34,6 +34,8 @@ typedef enum
 #define HUNT_LOG_FILENAME "logs.txt"
 #define TREASURE_GENERAL_FILENAME "treasure.data"
 
+#define SYM_LOG_FILENAME_START "./logged_hunt-" // followed by Hunt ID
+
 // treasure struct
 
 // treasure buffer reader macro
