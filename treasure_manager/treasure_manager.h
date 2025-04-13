@@ -30,7 +30,7 @@ typedef enum
 
 // hunt & path related macros
 
-#define HUNT_ID_SIZE 32 // auxiliary, used later
+#define HUNT_ID_SIZE 32
 #define HUNT_LOG_FILENAME "logs.txt"
 #define TREASURE_GENERAL_FILENAME "treasure.data"
 
