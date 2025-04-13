@@ -41,10 +41,7 @@ int main ( int argc, char **args )
   int operation_succesful = 1; // should stay 1 for operation succesful, reset to 0 for not succesful operation
   // considered not succesful on error; succesful even on data not found
 
-  int log_file_descriptor;
-
-  if ( operation != REMOVE_HUNT && operation != OTHER )
-    log_file_descriptor = get_log_file_descriptor ( args[2] );
+  int log_file_descriptor = -1;
 
   switch ( operation )
     {
@@ -58,6 +55,8 @@ int main ( int argc, char **args )
       
       operation_succesful -= add_treasure ( args[2] );
       
+      log_file_descriptor = get_log_file_descriptor ( args[2], ~CREATE_FILE );
+      
       break;
       
     case LIST_HUNT:
@@ -69,6 +68,8 @@ int main ( int argc, char **args )
 	}
       
       operation_succesful -= list_hunt ( args[2] );
+      
+      log_file_descriptor = get_log_file_descriptor ( args[2], ~CREATE_FILE );
       
       break;
       
@@ -88,6 +89,8 @@ int main ( int argc, char **args )
       
       operation_succesful -= view_treasure ( args[2], args[3] );
       
+      log_file_descriptor = get_log_file_descriptor ( args[2], ~CREATE_FILE );
+      
       break;
       
     case REMOVE_TREASURE:
@@ -105,6 +108,8 @@ int main ( int argc, char **args )
 	}
       
       operation_succesful -= remove_treasure ( args[2], args[3] );
+      
+      log_file_descriptor = get_log_file_descriptor ( args[2], ~CREATE_FILE );
       
       break;
       
@@ -130,21 +135,16 @@ int main ( int argc, char **args )
 
   char string_command[COMMAND_LINE_SIZE]; // to make writing and checking easier
 
-  if ( operation != OTHER )
+  if ( log_file_descriptor >= 0 ) // log file was found
     {
-      if ( operation == REMOVE_HUNT )
+      if ( operation != REMOVE_HUNT && operation != OTHER )
 	{
-	  if ( operation_succesful )
-	    printf ( "Hunt %s removed succesfully\n", args[2] );
-	  else
-	    printf ( "Hunt %s NOT removed succesfully\n", args[2] );
-	}
-      else
-	{
-	  if ( operation_succesful )
-	    strcpy ( string_command, "SUCCESS |" );
-	  else
-	    strcpy ( string_command, "FAILURE |" );
+	  // form command string
+
+	  strcpy ( string_command, "" );
+	  
+	  if ( !operation_succesful )
+	    strcat ( string_command, "ERROR |" );
 	  
 	  for ( int i = 0; i < argc; i++ )
 	    {
@@ -156,12 +156,22 @@ int main ( int argc, char **args )
 
 	  if ( write ( log_file_descriptor, string_command, strlen ( string_command ) + 1 ) != strlen ( string_command ) + 1 )
 	    {
-	      if ( log_file_descriptor >= 0 ) // check pentru cazul list hunt, dar nu exista hunt (si se termina succesful) // evita eroarea de scriere in log_hunt
-		printf ( "Eroare la scrierea in log file\n\n" );
+	      printf ( "Eroare la scrierea in log file\n" );
+	      close ( log_file_descriptor );
 	      exit ( -1 );
 	    }
-	  
+
 	  close ( log_file_descriptor );
+	}
+    }
+  else
+    {
+      if ( operation == REMOVE_HUNT )
+	{
+	  if ( operation_succesful )
+	    printf ( "SUCCESS | Hunt was removed\n" );
+	  else
+	    printf ( "FAILURE | Hunt was NOT removed\n" );
 	}
     }
   

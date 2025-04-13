@@ -10,17 +10,15 @@ treasure => folder
 	 binary file
 	 log file
 
-Un fisier treasure.data pentru toate treasure-urile dintr-un hunt, apoi sunt organizate per user, cu cate un fisier per user
+Un fisier treasure.data pentru toate treasure-urile dintr-un hunt; In functie de specificatii, daca se modifica, pot fi adaugate fisiere
 
-Strucutra:
+Structura:
 /project_root // treasure_manager
 |
 |_treasure_manager.c
 |_Hunt001/
 	|_treasure.data
-	|_logged_hunt -> log text file
-
-cu legaturi simbolice
+	|_logged_hunt -> log text file // SUCCESS on lack of error
 
 Structura cat mai modulara: mai multe fisiere .h, .c
 Important sa fie functional

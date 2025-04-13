@@ -66,7 +66,9 @@ int get_file_descriptor ( uint32_t size, char **strings, int flags );
 
 // function used to get log_file_descriptor, specific for main()
 
-int get_log_file_descriptor ( const char *hunt_id );
+#define CREATE_FILE ~0 // => ~CREATE_FILE == 0
+
+int get_log_file_descriptor ( const char *hunt_id, int create_file_flag );
 
 // list hunt function
 
