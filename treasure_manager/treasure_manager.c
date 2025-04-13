@@ -134,11 +134,6 @@ int list_hunt ( const char hunt_id[HUNT_ID_SIZE] )
       return 1;
     }
 
-  printf ( "Printing hunt:\n" );
-  printf ( "Hunt name: %s\n", hunt_id );
-  printf ( "Total file size: %lu\n", ( uint64_t ) statbuf.st_size ); // %lu may not work on 32 bit systems as intended; written for 64 bit systems to not get warning
-  printf ( "Last time modified: %s\n", ctime ( &statbuf.st_mtime ) ); // converts time into string format
-
   // form char ** to be sent as parameter
   // done so if specifications change to use nested folders (inside hunt primary folder)
   // for now, implementation is a bit hardcoded
@@ -173,6 +168,24 @@ int list_hunt ( const char hunt_id[HUNT_ID_SIZE] )
   strcpy ( strings[0], "." );
   strcpy ( strings[1], hunt_id );
   strcpy ( strings[2], TREASURE_GENERAL_FILENAME );
+
+  // to read file meta-data
+  char filepath[strlen ( hunt_id ) + strlen ( TREASURE_GENERAL_FILENAME ) + 5];
+  strcpy ( filepath, "./" );
+  strcat ( filepath, hunt_id );
+  strcat ( filepath, "/" );
+  strcat ( filepath, TREASURE_GENERAL_FILENAME );
+
+  if ( stat ( filepath, &statbuf ) == -1 ) // to make sure there is treasure.data and extract meta-data
+    {
+      printf ( "Nu a fost gasit treasure.data\n" );
+      return 0;
+    }
+
+  printf ( "Printing hunt:\n" );
+  printf ( "Hunt name: %s\n", hunt_id );
+  printf ( "Total data file size: %lu bytes\n", ( uint64_t ) statbuf.st_size ); // %lu may not work on 32 bit systems as intended; written for 64 bit systems to not get warning
+  printf ( "Last time modified: %s\n", ctime ( &statbuf.st_mtime ) ); // converts time into string format
 
   int file_descriptor = get_file_descriptor ( 3, strings, O_RDONLY );
 
