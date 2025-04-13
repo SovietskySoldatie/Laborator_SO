@@ -11,4 +11,4 @@ test*.txt - fisiere de date folosite pentru testare rapida - date inserate
 La afisarea file size, se afiseaza marimea intregului director pentru acel hunt
 Return types pot fi schimbate in viitor in functie de specificatii. Momentan sunt setate pentru un debug vizual
 
-In log file (sau terminal pentru remove_hunt) ERROR | reprezinta faptul ca pentru acea executie s-a intamplat o eroare (daca nu au fost gasite date nu intra la caz de eroare)
+In log file ERROR | reprezinta faptul ca pentru acea executie s-a intamplat o eroare (daca nu au fost gasite date nu intra la caz de eroare)
