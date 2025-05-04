@@ -1,0 +1,119 @@
+Nu a fost gasit hunt ID: Hunt001
+
+Created hunt ID: Hunt001
+Please insert treasure ID | MAX 31 charachters:
+Please insert treasure User Name | MAX 31 charachters:
+Please insert treasure Clue Text | MAX 127 charachters:
+Please insert treasure Value: Please insert treasure Coordinates:
+Latitude: Longitude: 
+Treasure added succesfully
+
+Printing hunt:
+Hunt name: Hunt001
+Total file size: 4096
+Last time modified: Sun Apr 13 14:04:58 2025
+
+__________________________________________________
+	Treasure ID: Treasure 001
+	Treasure user: User 001
+	Treasure clue: Clue 001
+	Treasure value: 1000
+	Treasure coordinates: latitude: -45.689999 | longitude: 123.000000
+
+
+Please insert treasure ID | MAX 31 charachters:
+Please insert treasure User Name | MAX 31 charachters:
+Please insert treasure Clue Text | MAX 127 charachters:
+Please insert treasure Value: Please insert treasure Coordinates:
+Latitude: Longitude: Latitude must be within -90 and 90 degrees; Longitude must be within -180 and 180 degrees
+Please insert treasure Coordinates:
+Latitude: Longitude: 
+Treasure added succesfully
+
+Printing hunt:
+Hunt name: Hunt001
+Total file size: 4096
+Last time modified: Sun Apr 13 14:04:58 2025
+
+__________________________________________________
+	Treasure ID: Treasure 001
+	Treasure user: User 001
+	Treasure clue: Clue 001
+	Treasure value: 1000
+	Treasure coordinates: latitude: -45.689999 | longitude: 123.000000
+
+__________________________________________________
+	Treasure ID: Treasure 002
+	Treasure user: User 002
+	Treasure clue: Clue 002
+	Treasure value: -123
+	Treasure coordinates: latitude: 78.900002 | longitude: -123.000000
+
+
+Nu a fost gasit treasure ID: Treasure 003
+
+__________________________________________________
+	Treasure ID: Treasure 001
+	Treasure user: User 001
+	Treasure clue: Clue 001
+	Treasure value: 1000
+	Treasure coordinates: latitude: -45.689999 | longitude: 123.000000
+
+
+__________________________________________________
+	Treasure ID: Treasure 002
+	Treasure user: User 002
+	Treasure clue: Clue 002
+	Treasure value: -123
+	Treasure coordinates: latitude: 78.900002 | longitude: -123.000000
+
+
+Please insert treasure ID | MAX 31 charachters:
+Please insert treasure User Name | MAX 31 charachters:
+Please insert treasure Clue Text | MAX 127 charachters:
+Please insert treasure Value: Please insert treasure Coordinates:
+Latitude: Longitude: Treasure Treasure 001 already was added to the file
+
+Printing hunt:
+Hunt name: Hunt001
+Total file size: 4096
+Last time modified: Sun Apr 13 14:04:58 2025
+
+__________________________________________________
+	Treasure ID: Treasure 001
+	Treasure user: User 001
+	Treasure clue: Clue 001
+	Treasure value: 1000
+	Treasure coordinates: latitude: -45.689999 | longitude: 123.000000
+
+__________________________________________________
+	Treasure ID: Treasure 002
+	Treasure user: User 002
+	Treasure clue: Clue 002
+	Treasure value: -123
+	Treasure coordinates: latitude: 78.900002 | longitude: -123.000000
+
+
+Created hunt ID: Hunt002
+Please insert treasure ID | MAX 31 charachters:
+Please insert treasure User Name | MAX 31 charachters:
+Please insert treasure Clue Text | MAX 127 charachters:
+Please insert treasure Value: Please insert treasure Coordinates:
+Latitude: Longitude: Latitude must be within -90 and 90 degrees; Longitude must be within -180 and 180 degrees
+Please insert treasure Coordinates:
+Latitude: Longitude: 
+Treasure added succesfully
+
+Printing hunt:
+Hunt name: Hunt002
+Total file size: 4096
+Last time modified: Sun Apr 13 14:04:58 2025
+
+__________________________________________________
+	Treasure ID: Treasure 004
+	Treasure user: User 005
+	Treasure clue: Clue 004
+	Treasure value: 10000
+	Treasure coordinates: latitude: -2.340000 | longitude: 8.694300
+
+
