@@ -207,7 +207,7 @@ int main ( void )
 	case EXIT:
 	  if (strcmp(command_line, "exit") == 0)
 	    {
-      // logica de iesire, dacă este necesară
+	      // logica de iesire, dacă este necesară
 	    }
 	  else
 	    {
@@ -231,7 +231,7 @@ int main ( void )
 	  
 	default:
 	  // opțiune necunoscută
-    break;
+	  break;
 	}
     }
   
