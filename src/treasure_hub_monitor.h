@@ -1,5 +1,5 @@
 /*
-	TREASURE HUB
+  TREASURE HUB
 */
 
 typedef enum {
