@@ -16,12 +16,16 @@
 
 #include <unistd.h>
 #include <signal.h>
+#include <fcntl.h>
 
-// monitor program :: 
+// monitor program launch command
 #define MONITOR_PROGRAM_LAUNCH "./treasure_hub_monitor.exe"
 
+// common file between hub_main and monitor to share commands
+#define COMMANDS_FILENAME "monitor_commands_file.cmd"
+
 // flag to remember if monitor is active or not
-int flag_monitor_active;
+int flag_monitor_active; // not exactly elegant, couldn't find a better way to make it work
 
 
 #define MONITOR_COMMAND_MAX_SIZE 128 // sa ajunga
@@ -33,7 +37,7 @@ typedef enum
     OTHER // to be left as last
   } MONITOR_COMMAND;
 
-MONITOR_COMMAND menu( char *command_line )
+MONITOR_COMMAND menu ( char *command_line )
 {
   MONITOR_COMMAND ret = OTHER;
 
@@ -108,6 +112,8 @@ MONITOR_COMMAND menu( char *command_line )
 	  ret = OTHER;
 	}
     }
+
+  printf ( "\n__________________________________________\n" );
   
   return ret;
 }
@@ -119,6 +125,15 @@ void handle_SIGCHLD ( int signal ) // requires child to send SIGCHLD on terminat
 
 int main ( void )
 {
+  int commands_file = open ( COMMANDS_FILENAME, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR ); // always reset the file to empty-file
+
+  if ( commands_file == -1 )
+    {
+      printf ( "Eroare la creare fisier comenzi -- hub-level\n" );
+      
+      exit ( 1 );
+    }
+  
   char command_line[MONITOR_COMMAND_MAX_SIZE];
   MONITOR_COMMAND opt;
 
@@ -138,6 +153,11 @@ int main ( void )
   
   while ( ( opt = menu ( command_line ) ) != OTHER ) // should go on forever (the condition)
     {
+      if ( !flag_monitor_active ) pid_monitor = -1; // in case stop_monitor is "asynchronous" // does not stop immediately
+      
+      char *token;
+      char sep[] = " \n"; // space and \n
+      
       // first the monitor process related options // as in influencing the process itself
       switch (opt)
 	{
@@ -146,7 +166,7 @@ int main ( void )
 	    {
 	      if ( pid_monitor > 0 ) // monitor already exists
 		{
-		  printf ( "Monitor already active\n" );
+		  printf ( "ERROR :: Monitor already active\n" );
 		  opt = OTHER;
 		  continue;
 		}
@@ -187,13 +207,14 @@ int main ( void )
 	    {
 	      if ( pid_monitor < 0 ) // monitor doesn't exist
 		{
-		  printf ( "Monitor not active\n" );
+		  printf ( "ERROR :: Monitor not active\n" );
 		  opt = OTHER;
 		  continue;
 		}
 	      else
 		{
 		  kill ( pid_monitor, SIGUSR2 );
+		  pid_monitor = -1;
 		}
 	    }
 	  else
@@ -205,35 +226,100 @@ int main ( void )
 	  break;
 	  
 	case EXIT:
-	  if (strcmp(command_line, "exit") == 0)
+	  if ( strcmp ( command_line, "exit" ) == 0 )
 	    {
-	      // logica de iesire, dacă este necesară
+	      if ( !flag_monitor_active ) // monitor inactive
+		{
+		  if ( pid_monitor == -1 )
+		    {
+		      printf ( "ERROR :: Monitor NOT active" );
+		      opt = OTHER;
+		      continue;
+		    }
+		  opt = OTHER;
+		  goto EXIT_LOOP; // because a simple break would (probably) relates only to the switch-case
+		}
+	      else
+		{
+		  printf ( "ERROR :: Monitor STILL active\n" );
+		}
 	    }
 	  else
 	    {
-	      printf("Comanda invalida\n");
+	      printf ( "Comanda invalida\n" );
 	      opt = OTHER;
 	      continue;
 	    }
 	  break;
 	  
 	case LIST_HUNTS:
-	  // logica pentru listarea hunt-urilor
+	  if ( strcmp ( command_line, "list_hunts" ) == 0 )
+	    {
+	      if ( flag_monitor_active ) // monitor active
+		{
+		  
+		}
+	      else
+		{
+		  printf ( "ERROR :: Monitor NOT active\n" );
+		}
+	    }
+	  else
+	    {
+	      printf ( "Comanda invalida\n" );
+	      opt = OTHER;
+	      continue;
+	    }
 	  break;
 	  
 	case LIST_TREASURES:
-	  // logica pentru listarea comoarelor
+	  if ( strcmp ( command_line, "list_hunts" ) == 0 )
+	    {
+	      if ( flag_monitor_active ) // monitor active
+		{
+		  
+		}
+	      else
+		{
+		  printf ( "ERROR :: Monitor NOT active\n" );
+		}
+	    }
+	  else
+	    {
+	      printf ( "Comanda invalida\n" );
+	      opt = OTHER;
+	      continue;
+	    }
 	  break;
 	  
 	case VIEW_TREASURE:
-	  // logica pentru vizualizarea unei comori
+	  if ( strcmp ( command_line, "list_hunts" ) == 0 )
+	    {
+	      if ( flag_monitor_active ) // monitor active
+		{
+		  
+		}
+	      else
+		{
+		  printf ( "ERROR :: Monitor NOT active\n" );
+		}
+	    }
+	  else
+	    {
+	      printf ( "Comanda invalida\n" );
+	      opt = OTHER;
+	      continue;
+	    }
 	  break;
 	  
-	default:
-	  // opțiune necunoscută
+	default: // shouldn't reach this point
+	  opt = OTHER;
+	  printf ( "Eroare la switch ( opt )\n" );
 	  break;
 	}
     }
+
+ EXIT_LOOP:
   
   return 0;
 }
