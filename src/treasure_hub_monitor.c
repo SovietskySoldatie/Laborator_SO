@@ -9,26 +9,20 @@ int commands_file;
 void handle_SIGNAL_COMMAND ( int signal ) // SIGUSR1 used to fork and exec into normal hunt feature
 {
   char command_line[MONITOR_COMMAND_MAX_SIZE];
-  char aux[MONITOR_COMMAND_MAX_SIZE];
-  char ch;
 
-  // used aux to clear '\n' chars in buffer before reading command
-  if ( fgets ( aux, MONITOR_COMMAND_MAX_SIZE, commands_file ) == NULL ) // check fgets for errors
+  ssize_t bytes_read;
+  bytes_read = read ( commands_file, command_line, ( MONITOR_COMMAND_MAX_SIZE - 1 ) * sizeof ( char ) );
+
+  if ( bytes_read < 0 )
     {
       printf ( "Eroare la citire comanda -- monitor level\n" );
       exit ( 1 );
     }
-  else // eliminate possible terminating '\n' char
-    {
-      if ( ch != '\n' ) // insert char taken in while condition
-	{
-	  command_line[0] = ch;
-	  command_line[1] = '\0';
-	  strcat ( command_line, aux );
-	}
-      if ( command_line[strlen ( command_line ) - 1] == '\n' )
-	command_line[strlen ( command_line ) - 1] = '\0';
-    }
+
+  command_line[bytes_read + 1] = '\0'; // just to be sure
+
+  if ( command_line[strlen ( command_line ) - 1] == '\n' )
+    command_line[strlen ( command_line ) - 1] = '\0';
   
   char *token;
   char sep[] = " \n"; // space and \n
@@ -57,7 +51,7 @@ void handle_SIGNAL_COMMAND ( int signal ) // SIGUSR1 used to fork and exec into 
 	}
 
       if ( i == 1 ) // operation/feature selection argument
-	strpcy ( args[i], "--" );
+	strcpy ( args[i], "--" );
       else
 	strcpy ( args[i], "" );
     }
@@ -80,11 +74,10 @@ void handle_SIGNAL_COMMAND ( int signal ) // SIGUSR1 used to fork and exec into 
 
   pid_t pid_treasure_manager = fork();
 		  
-  if ( pid_monitor == -1 ) // failure to fork
+  if ( pid_treasure_manager == -1 ) // failure to fork
     {
       printf ( "Eroare la creare treasure manager process -- fork\n" );
-      opt = OTHER;
-      continue;
+      exit ( 1 );
     }
   
   if ( pid_treasure_manager == 0 ) // treasure_manager (child) process
@@ -94,7 +87,7 @@ void handle_SIGNAL_COMMAND ( int signal ) // SIGUSR1 used to fork and exec into 
     }
 
   int status; // may be used for debug
-  wait(&status); // wait for treasure manager to finish // to ensure arguments are preserved
+  waitpid ( pid_treasure_manager, &status, 0 ); // wait for treasure manager to finish // to ensure arguments are preserved
 
   for ( i = 0; args[i] != NULL && i < COMMAND_MAX_NR_ARGS + 1; i++ )
     free ( args[i] );
@@ -104,7 +97,8 @@ void handle_SIGNAL_COMMAND ( int signal ) // SIGUSR1 used to fork and exec into 
 
 void handle_SIGNAL_TERMINATE ( int signal ) // SIGUSR2 used to terminate monitor (this) process
 {
-  goto EXIT_PROCESS;
+  close ( commands_file );
+  exit ( 0 );
 }
 
 int main ( void )
@@ -147,9 +141,6 @@ int main ( void )
     }
 
   while ( 1 ); // idle state of process
-
- EXIT_PROCESS:
-  close ( commands_file );
 
   return 0;
 }
