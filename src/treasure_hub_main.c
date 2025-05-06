@@ -5,37 +5,10 @@
 // program to create and send signal(s) to the monitor process
 // this program validates commands for the monitor and sends them to intermediary file
 
-// communication signals:
-// SIGUSR1 - normal feature
-// SIGUSR2 - stop_monitor
-
-
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-
-#include <unistd.h>
-#include <signal.h>
-#include <fcntl.h>
-
-// monitor program launch command
-#define MONITOR_PROGRAM_LAUNCH "./treasure_hub_monitor.exe"
-
-// common file between hub_main and monitor to share commands
-#define COMMANDS_FILENAME "monitor_commands_file.cmd"
+#include "treasure_hub_monitor.h"
 
 // flag to remember if monitor is active or not
 int flag_monitor_active; // not exactly elegant, couldn't find a better way to make it work
-
-
-#define MONITOR_COMMAND_MAX_SIZE 128 // sa ajunga
-
-// commands taken by the treasure_hub program
-typedef enum
-  {
-    START_MONITOR, LIST_HUNTS, LIST_TREASURES, VIEW_TREASURE, STOP_MONITOR, EXIT,
-    OTHER // to be left as last
-  } MONITOR_COMMAND;
 
 MONITOR_COMMAND menu ( char *command_line )
 {
@@ -147,8 +120,9 @@ int main ( void )
   
   if ( sigaction ( SIGCHLD, &sa, NULL ) == -1 )
     {
-      perror ( "sigaction" );
-      exit ( -1 ) ;
+      printf ( "Eroare la alocare sigaction -- hub level\n" );
+      close ( commands_file );
+      exit ( 1 ) ;
     }
   
   while ( ( opt = menu ( command_line ) ) != OTHER ) // should go on forever (the condition)
@@ -157,11 +131,16 @@ int main ( void )
       
       char *token;
       char sep[] = " \n"; // space and \n
+      char terminating_line_char[] = "\n";
+      char copy_command_line[MONITOR_COMMAND_MAX_SIZE]; // just in case command_line content is somehow altered after using strtok
+
+      strcpy ( copy_command_line, command_line );
       
       // first the monitor process related options // as in influencing the process itself
       switch (opt)
 	{
 	case START_MONITOR:
+	  
 	  if ( strcmp ( command_line, "start_monitor" ) == 0 )
 	    {
 	      if ( pid_monitor > 0 ) // monitor already exists
@@ -200,9 +179,11 @@ int main ( void )
 	      opt = OTHER;
 	      continue;
 	    }
+	  
 	  break;
 	  
 	case STOP_MONITOR:
+	  
 	  if ( strcmp ( command_line, "stop_monitor" ) == 0 )
 	    {
 	      if ( pid_monitor < 0 ) // monitor doesn't exist
@@ -213,7 +194,7 @@ int main ( void )
 		}
 	      else
 		{
-		  kill ( pid_monitor, SIGUSR2 );
+		  kill ( pid_monitor, SIGNAL_TERMINATE );
 		  pid_monitor = -1;
 		}
 	    }
@@ -223,9 +204,11 @@ int main ( void )
 	      opt = OTHER;
 	      continue;
 	    }
+	  
 	  break;
 	  
 	case EXIT:
+	  
 	  if ( strcmp ( command_line, "exit" ) == 0 )
 	    {
 	      if ( !flag_monitor_active ) // monitor inactive
@@ -237,7 +220,7 @@ int main ( void )
 		      continue;
 		    }
 		  opt = OTHER;
-		  goto EXIT_LOOP; // because a simple break would (probably) relates only to the switch-case
+		  goto EXIT_LOOP; // because a simple break would (probably) relate only to the switch-case
 		}
 	      else
 		{
@@ -250,76 +233,154 @@ int main ( void )
 	      opt = OTHER;
 	      continue;
 	    }
+	  
 	  break;
 	  
 	case LIST_HUNTS:
-	  if ( strcmp ( command_line, "list_hunts" ) == 0 )
+	  
+	  if ( flag_monitor_active ) // monitor active
 	    {
-	      if ( flag_monitor_active ) // monitor active
+	      if ( strcmp ( command_line, "list_hunts" ) == 0 )
 		{
-		  
+		  if ( ( write ( commands_file, command_line, strlen ( command_line ) ) ) != strlen ( command_line ) )
+		    {
+		      printf ( "Eroare la scriere in commands_file command_line\n" );
+		      exit ( 1 );
+		    }
+
+		  if ( ( write ( commands_file, terminating_line_char, strlen ( terminating_line_char ) ) ) != strlen ( terminating_line_char ) )
+		    {
+		      printf ( "Eroare la scriere in commands_file terminating line\n" );
+		      exit ( 1 );
+		    }
+
+		  kill ( pid_monitor, SIGNAL_COMMAND );
 		}
 	      else
 		{
-		  printf ( "ERROR :: Monitor NOT active\n" );
+		  printf ( "Comanda invalida\n" );
+		  opt = OTHER;
+		  continue;
 		}
 	    }
 	  else
 	    {
-	      printf ( "Comanda invalida\n" );
+	      printf ( "ERROR :: Monitor NOT active\n" );
 	      opt = OTHER;
-	      continue;
 	    }
+	  
 	  break;
 	  
 	case LIST_TREASURES:
-	  if ( strcmp ( command_line, "list_hunts" ) == 0 )
+
+	  if ( flag_monitor_active ) // monitor active
 	    {
-	      if ( flag_monitor_active ) // monitor active
+	      token = strtok ( copy_command_line, sep );
+
+	      if ( strcmp ( token, "list_treasures" ) != 0 )
 		{
-		  
+		  printf ( "Comanda invalida\n" );
+		  opt = OTHER;
+		  continue;
 		}
-	      else
+
+	      token = strtok ( NULL, sep ); // choose HUNT_ID
+	      token = strtok ( NULL, sep ); // should return NULL on OK command
+
+	      if ( token != NULL ) // command not OK
 		{
-		  printf ( "ERROR :: Monitor NOT active\n" );
+		  printf ( "Comanda invalida\n" );
+		  opt = OTHER;
+		  continue;
 		}
+
+	      if ( ( write ( commands_file, command_line, strlen ( command_line ) ) ) != strlen ( command_line ) )
+		{
+		  printf ( "Eroare la scriere in commands_file command_line\n" );
+		  exit ( 1 );
+		}
+	      
+	      if ( ( write ( commands_file, terminating_line_char, strlen ( terminating_line_char ) ) ) != strlen ( terminating_line_char ) )
+		{
+		  printf ( "Eroare la scriere in commands_file terminating line\n" );
+		  exit ( 1 );
+		}
+	      
+	      kill ( pid_monitor, SIGNAL_COMMAND );
 	    }
 	  else
 	    {
-	      printf ( "Comanda invalida\n" );
+	      printf ( "ERROR :: Monitor NOT active\n" );
 	      opt = OTHER;
-	      continue;
 	    }
+	  
 	  break;
 	  
 	case VIEW_TREASURE:
-	  if ( strcmp ( command_line, "list_hunts" ) == 0 )
+
+	  if ( flag_monitor_active ) // monitor active
 	    {
-	      if ( flag_monitor_active ) // monitor active
+	      token = strtok ( copy_command_line, sep );
+
+	      if ( strcmp ( token, "view_treasure" ) != 0 )
 		{
-		  
+		  printf ( "Comanda invalida\n" );
+		  opt = OTHER;
+		  continue;
 		}
-	      else
+
+	      token = strtok ( NULL, sep ); // choose HUNT_ID
+	      token = strtok ( NULL, sep ); // choose TREASURE_ID
+	      token = strtok ( NULL, sep ); // should return NULL on OK command
+
+	      if ( token != NULL ) // command not OK
 		{
-		  printf ( "ERROR :: Monitor NOT active\n" );
+		  printf ( "Comanda invalida\n" );
+		  opt = OTHER;
+		  continue;
 		}
+
+	      if ( ( write ( commands_file, command_line, strlen ( command_line ) ) ) != strlen ( command_line ) )
+		{
+		  printf ( "Eroare la scriere in commands_file command_line\n" );
+		  exit ( 1 );
+		}
+	      
+	      if ( ( write ( commands_file, terminating_line_char, strlen ( terminating_line_char ) ) ) != strlen ( terminating_line_char ) )
+		{
+		  printf ( "Eroare la scriere in commands_file terminating line\n" );
+		  exit ( 1 );
+		}
+	      
+	      kill ( pid_monitor, SIGNAL_COMMAND );
 	    }
 	  else
 	    {
-	      printf ( "Comanda invalida\n" );
+	      printf ( "ERROR :: Monitor NOT active\n" );
 	      opt = OTHER;
-	      continue;
 	    }
+	  
 	  break;
 	  
 	default: // shouldn't reach this point
+	  
 	  opt = OTHER;
 	  printf ( "Eroare la switch ( opt )\n" );
+	  
 	  break;
 	}
     }
 
  EXIT_LOOP:
+
+  close ( commands_file );
+
+  // on exit() fnc call, all child processes should be terminated
+  // memory leak treating can be implemented, but time is short
+  // so let's pretend that the computer has enough memory to not worry about those
+  
+  if ( flag_monitor_active && pid_monitor > 0 ) // just to be sure
+    kill ( pid_monitor, SIGKILL );
   
   return 0;
 }

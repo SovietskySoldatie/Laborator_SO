@@ -1,36 +1,36 @@
 /*
-  TREASURE HUB
+  TREASURE HUB header
 */
 
-typedef enum {
-    CMD_NONE = 0,
-    CMD_START_MONITOR,
-    CMD_LIST_HUNTS,
-    CMD_LIST_TREASURES,
-    CMD_VIEW_TREASURE,
-    CMD_STOP_MONITOR
-} command_type_t;
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
-// Structura pentru comanda transmisă monitorului
-typedef struct {
-    command_type_t cmd;
-    char hunt_id[256];
-    char treasure_id[256];
-} command_t;
+#include <unistd.h>
+#include <signal.h>
+#include <fcntl.h>
 
-// Definim semnalele folosite
-#define SIGNAL_COMMAND   SIGUSR1
+// monitor program launch command
+#define MONITOR_PROGRAM_LAUNCH "./treasure_hub_monitor.exe"
+
+// common file between hub_main and monitor to share commands
+#define COMMANDS_FILENAME "monitor_commands_file.cmd"
+
+
+#define MONITOR_COMMAND_MAX_SIZE 128 // sa ajunga
+
+// commands taken by the treasure_hub program
+typedef enum
+  {
+    START_MONITOR, LIST_HUNTS, LIST_TREASURES, VIEW_TREASURE, STOP_MONITOR, EXIT,
+    OTHER // to be left as last
+  } MONITOR_COMMAND;
+
+// communication signals:
+// SIGUSR1 - normal feature
+// SIGUSR2 - stop_monitor
+#define SIGNAL_COMMAND SIGUSR1
 #define SIGNAL_TERMINATE SIGUSR2
-
-// Fișierul prin care treasure_hub comunică cu monitorul
-#define COMMAND_FILE "monitor_command.txt"
-
-// Timpul de întârziere pentru închiderea monitorului (microsecunde)
-#define MONITOR_DELAY_US 500000
-
-// Variabilă externă pentru PID-ul monitorului
-extern pid_t monitor_pid;
-extern int monitor_running;
 
 // Declarații funcții
 
