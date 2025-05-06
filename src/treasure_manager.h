@@ -18,13 +18,15 @@
 // operations and command line macros
 
 #define OPERATION_STRING_SIZE 32
-#define OPERATIONS_NUMBER 5
+#define OPERATIONS_NUMBER 6
 
 #define COMMAND_LINE_SIZE 128 // worst-case, enough place for expansion of specifications
 
+// LIST_HUNT == list_treasures in treasure hub
+// LIST_ALL_HUNTS == list_hunts in terasure hub
 typedef enum
   {
-    ADD_TREASURE = 0, LIST_HUNT, VIEW_TREASURE, REMOVE_TREASURE, REMOVE_HUNT,
+    ADD_TREASURE = 0, LIST_ALL_HUNTS, LIST_HUNT, VIEW_TREASURE, REMOVE_TREASURE, REMOVE_HUNT,
     OTHER // to be left as final value no matter what
   } OPERATION;
 

@@ -2,7 +2,7 @@
 
 int main ( int argc, char **args )
 {
-  if ( argc != 3 && argc != 4 ) // check number of arguments
+  if ( argc != 2 && argc != 3 && argc != 4 ) // check number of arguments
     {
       printf ( "Numar invalid de argumente\n" );
       exit ( -1 );
@@ -25,8 +25,9 @@ int main ( int argc, char **args )
   char operations[OPERATIONS_NUMBER][OPERATION_STRING_SIZE] = // hard-coded operations
     {
       "--add",
-      "--list",
-      "--view",
+      "--list_hunts",
+      "--list_treasures",
+      "--view_treasure",
       "--remove_treasure",
       "--remove_hunt"
     };
@@ -57,6 +58,18 @@ int main ( int argc, char **args )
       
       log_file_descriptor = get_log_file_descriptor ( args[2], ~CREATE_FILE );
       
+      break;
+
+    case LIST_ALL_HUNTS:
+
+      if ( argc != 2 )
+	{
+	  operation = OTHER;
+	  printf ( "Numar invalid de argumente pentru aceasta comanda\n" );
+	}
+
+      // here, the call needs to be inserted and to see what [REDACTED] needs to be done
+
       break;
       
     case LIST_HUNT:
