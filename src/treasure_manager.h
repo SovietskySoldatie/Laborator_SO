@@ -8,6 +8,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <dirent.h>
 
 /*
   Treasure Manager system:
@@ -37,6 +38,14 @@ typedef enum
 #define TREASURE_GENERAL_FILENAME "treasure.data"
 
 #define SYM_LOG_FILENAME_START "./logged_hunt-" // followed by Hunt ID
+
+#define CURRENT_FOLDER "."
+#define PREVIOUS_FOLDER ".."
+
+#define FULLPATH_MAX_SIZE 1024 // sigur trebuie sa ajunga
+
+// used for code similarity
+typedef struct dirent DIRENT;
 
 // treasure struct
 
@@ -101,3 +110,7 @@ int remove_treasure ( const char hunt_id[HUNT_ID_SIZE], const char treasure_id[T
 // function to remove hunt
 
 int remove_hunt ( const char hunt_id[HUNT_ID_SIZE] );
+
+// function to list all hunts
+
+int list_all_hunts();

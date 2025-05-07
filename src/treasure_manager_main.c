@@ -14,7 +14,7 @@ int main ( int argc, char **args )
       exit ( -1 );
     }
 
-  if ( strlen ( args[2] ) >= HUNT_ID_SIZE ) // check that args[2] can be a valid hunt_id
+  if ( argc > 2 && strlen ( args[2] ) >= HUNT_ID_SIZE ) // check that args[2] can be a valid hunt_id
     {
       printf ( "Argumentul corespunzator hunt ID e prea lung\n" );
       exit ( -1 );
@@ -68,7 +68,7 @@ int main ( int argc, char **args )
 	  printf ( "Numar invalid de argumente pentru aceasta comanda\n" );
 	}
 
-      // here, the call needs to be inserted and to see what [REDACTED] needs to be done
+      operation_succesful -= list_all_hunts();
 
       break;
       
@@ -150,7 +150,7 @@ int main ( int argc, char **args )
 
   if ( log_file_descriptor >= 0 ) // log file was found
     {
-      if ( operation != REMOVE_HUNT && operation != OTHER )
+      if ( operation != REMOVE_HUNT && operation != OTHER && operation != LIST_ALL_HUNTS )
 	{
 	  // form command string
 

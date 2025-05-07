@@ -211,19 +211,14 @@ int main ( void )
 	  
 	  if ( strcmp ( command_line, "exit" ) == 0 )
 	    {
-	      if ( !flag_monitor_active ) // monitor inactive
+	      if ( !flag_monitor_active && pid_monitor == -1 ) // monitor inactive
 		{
-		  if ( pid_monitor == -1 )
-		    {
-		      printf ( "ERROR :: Monitor NOT active" );
-		      opt = OTHER;
-		      continue;
-		    }
 		  opt = OTHER;
 		  goto EXIT_LOOP; // because a simple break would (probably) relate only to the switch-case
 		}
 	      else
 		{
+		  opt = OTHER;
 		  printf ( "ERROR :: Monitor STILL active\n" );
 		}
 	    }

@@ -838,3 +838,59 @@ int remove_hunt ( const char hunt_id[HUNT_ID_SIZE] )
   
   return 0;
 }
+
+int list_all_hunts()
+{
+  int flag_no_hunt_found = 1;
+  
+  DIR *dir = opendir ( CURRENT_FOLDER ); // DIR struct already exists :D
+  DIRENT *entry;
+  
+  if ( dir == NULL )
+    {
+      printf ( "Eroare la deschiderea directorului curent\n" );
+      return 1;
+    }
+
+  printf ( "Printing all hunts:\n" );
+  
+  while ( ( entry = readdir ( dir ) ) != NULL )
+    {
+      if ( strcmp ( entry->d_name, CURRENT_FOLDER ) == 0 || strcmp ( entry->d_name, PREVIOUS_FOLDER ) == 0 ) // avoid "." and ".." folders
+	continue;
+
+      // evaluate current entry if is folder or not
+      char fullpath[FULLPATH_MAX_SIZE];
+
+      strcpy ( fullpath, CURRENT_FOLDER );
+      strcat ( fullpath, "/" );
+      strcat ( fullpath, entry->d_name );
+
+      struct stat statbuf;
+      
+      if ( stat ( fullpath, &statbuf ) != 0 )
+	{
+	  printf ( "Eroare la stat intrare in folder curent\n" );
+	  return 1;
+	}
+      
+      if ( S_ISDIR ( statbuf.st_mode ) )
+	{
+	  flag_no_hunt_found = 0;
+	  printf("\tHUNT: %s\n", entry->d_name);
+	}
+    }
+
+  if ( flag_no_hunt_found )
+    printf ( "\tNo hunts found\n" );
+
+  printf ( "\n" );
+  
+  if ( closedir ( dir ) == -1 )
+    {
+      printf ( "Eroare la închiderea directorului" );
+      return 1;
+    }
+  
+  return 0;
+}
