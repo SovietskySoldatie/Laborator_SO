@@ -54,7 +54,8 @@ MONITOR_COMMAND menu ( char *command_line )
 	    command_line[strlen ( command_line ) - 1] = '\0';
 	}
 
-      token = strtok ( command_line, sep );
+      strcpy ( aux, command_line );
+      token = strtok ( aux, sep );
 
       if ( strcmp ( command_line, "start_monitor" ) == 0 )
 	{
@@ -137,7 +138,7 @@ int main ( void )
       strcpy ( copy_command_line, command_line );
       
       // first the monitor process related options // as in influencing the process itself
-      switch (opt)
+      switch ( opt )
 	{
 	case START_MONITOR:
 	  
@@ -163,7 +164,8 @@ int main ( void )
 		  if ( pid_monitor == 0 ) // monitor ( child ) process
 		    {
 		      execlp ( MONITOR_PROGRAM_LAUNCH, MONITOR_PROGRAM_LAUNCH, NULL );
-		      printf ( "Eroare la create monitor process -- exec\n" );
+
+		      printf ( "Eroare la create monitor process -- exec -- %d\n", errno );
 		    }
 		  else // hub ( parent ) process
 		    {
@@ -195,7 +197,7 @@ int main ( void )
 	      else
 		{
 		  kill ( pid_monitor, SIGNAL_TERMINATE );
-		  pid_monitor = -1;
+		  // pid_monitor = -1;
 		}
 	    }
 	  else
@@ -364,6 +366,8 @@ int main ( void )
 	  
 	  break;
 	}
+
+      usleep (  SECOND_TO_MICROSECONDS / 10 * 1 ); // to ensure menu waits for monitor to finish work
     }
 
  EXIT_LOOP:

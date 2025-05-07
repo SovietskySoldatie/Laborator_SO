@@ -1,1 +1,0 @@
-vlad@LinuxUbuntu.5446:1746635529

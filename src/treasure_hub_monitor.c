@@ -68,9 +68,29 @@ void handle_SIGNAL_COMMAND ( int signal ) // SIGUSR1 used to fork and exec into 
 
   for ( i = i + 1; i < COMMAND_MAX_NR_ARGS + 1; i++ )
     {
-      free ( args[i] );
+      if ( args[i] != NULL )
+	free ( args[i] );
       args[i] = NULL;
     }
+
+  /*
+  printf ( "\n\tDebug monitor args[]:\n" );
+
+  // debug reasons
+  for ( i = 0; i < COMMAND_MAX_NR_ARGS + 1; i++ )
+    {
+      if ( args[i] != NULL )
+	printf ( "\t\t%s\n", args[i] );
+      else
+	printf ( "\t\t%s\n", "NULL" );
+    }
+  printf ( "\n" );
+  */
+
+  if ( args[COMMAND_MAX_NR_ARGS] != NULL && i == COMMAND_MAX_NR_ARGS ) // hardcoded because IDK why it doesn't work
+    free ( args[COMMAND_MAX_NR_ARGS] );
+  args[COMMAND_MAX_NR_ARGS] = NULL;
+  
 
   pid_t pid_treasure_manager = fork();
 		  
@@ -82,8 +102,8 @@ void handle_SIGNAL_COMMAND ( int signal ) // SIGUSR1 used to fork and exec into 
   
   if ( pid_treasure_manager == 0 ) // treasure_manager (child) process
     {
-      execvp ( TREASURE_MANAGER_LAUNCH, args );
-      printf ( "Eroare la create treasure manager process -- exec\n" );
+      execvp ( args[0], args );
+      printf ( "Eroare la create treasure manager process -- exec -- %d\n", errno );
     }
 
   int status; // may be used for debug
@@ -122,7 +142,7 @@ int main ( void )
   sigemptyset ( &sa2.sa_mask );
   sa2.sa_flags = SA_RESTART | SA_NOCLDSTOP;  // SA_RESTART evita întreruperea apelurilor blocante
   
-  if ( sigaction ( SIGNAL_TERMINATE, &sa1, NULL ) == -1 )
+  if ( sigaction ( SIGNAL_TERMINATE, &sa2, NULL ) == -1 )
     {
       printf ( "Eroare la alocare sigaction SIGNAL_TERMINATE -- monitor level\n" );
       close ( commands_file );
