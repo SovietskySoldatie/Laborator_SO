@@ -877,7 +877,19 @@ int list_all_hunts()
       if ( S_ISDIR ( statbuf.st_mode ) )
 	{
 	  flag_no_hunt_found = 0;
-	  printf("\tHUNT: %s\n", entry->d_name);
+	  printf("\tHUNT: %s | ", entry->d_name);
+
+	  
+	  strcat ( fullpath, "/" );
+	  strcat ( fullpath, TREASURE_GENERAL_FILENAME );
+
+	  if ( stat ( fullpath, &statbuf ) != 0 )
+	    {
+	      printf ( "\n\tEroare la deschidere treasure data file in Hunt\n" );
+	      return 1;
+	    }
+
+	  printf ( "Number of treasures: %lu\n", ( uint64_t ) statbuf.st_size / sizeof ( TREASURE ) );
 	}
     }
 

@@ -1,3 +1,1 @@
 list_hunts
-list_treasures Hunt001
-view_treasure Hunt001 Treasure001
