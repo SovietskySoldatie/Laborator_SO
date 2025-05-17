@@ -14,6 +14,11 @@
 
 // "physics related"
 #define SECOND_TO_MICROSECONDS 1000000
+#define NUMBER_DIGITS_LIMIT 128
+
+// printing through pipe macros
+#define DISK_BUFFER_SIZE 4096 // suma rotunda
+#define PRINT_STRING_INCREMENT 1024 // initial 4096, pot aparea probleme pe versiuni Linux <= 2.6
 
 #define CURRENT_FOLDER "."
 
@@ -26,7 +31,7 @@
 // common file between hub_main and monitor to share commands
 #define COMMANDS_FILENAME "monitor_commands_file.cmd"
 
-#define COMMAND_MAX_NR_ARGS 4 // does not include NULL terminating element in char **arr // includes treasure manager launch
+#define COMMAND_MAX_NR_ARGS 6 // does not include NULL terminating element in char **arr // includes treasure manager launch
 
 
 #define MONITOR_COMMAND_MAX_SIZE 128 // sa ajunga
@@ -43,3 +48,5 @@ typedef enum
 // SIGUSR2 - stop_monitor
 #define SIGNAL_COMMAND SIGUSR1
 #define SIGNAL_TERMINATE SIGUSR2
+
+void transform_int_to_string ( int integer, char *string );

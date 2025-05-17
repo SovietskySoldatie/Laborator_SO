@@ -12,3 +12,5 @@ La afisarea file size, se afiseaza marimea fisierului de date
 Return types pot fi schimbate in viitor in functie de specificatii. Momentan sunt setate pentru un debug vizual
 
 In log file ERROR | reprezinta faptul ca pentru acea executie s-a intamplat o eroare (daca nu au fost gasite date nu intra la caz de eroare)
+
+Erorile de executie vor fi afisate in terminal direct

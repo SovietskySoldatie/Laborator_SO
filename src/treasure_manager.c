@@ -4,15 +4,126 @@
 
 #include "treasure_manager.h"
 
-void print_treasure ( TREASURE treasure )
+void print_procedure ( int pipe_id, char *print, int print_size, int hub_id )
 {
-  printf ( "__________________________________________________\n" );
-  printf ( "\tTreasure ID: %s\n", treasure.id );
-  printf ( "\tTreasure user: %s\n", treasure.user_name );
-  printf ( "\tTreasure clue: %s\n", treasure.clue_text );
-  printf ( "\tTreasure value: %d\n", treasure.value );
-  printf ( "\tTreasure coordinates: latitude: %f | longitude: %f\n", treasure.latitude, treasure.longitude );
-  printf ( "\n" );
+  int bytes_written, act_pointer = 0; // act_pointer used for pointer operations on print
+
+  while ( ( bytes_written = write ( pipe_id, print, (
+						     act_pointer + PRINT_STRING_INCREMENT > print_size // write (INCREMENT) would overflow the BUFFER
+						     ) ? strlen ( print + act_pointer ) + 1 : PRINT_STRING_INCREMENT ) // because I would hate complicating with a flag
+	    ) > 0 )
+    {
+      kill ( hub_id, SIGUSR1 );
+      act_pointer += bytes_written;
+    }
+  
+  if ( bytes_written < 0 )
+    printf ( "Eroare la scriere in pipe\n" );
+}
+
+// reallocation ifs do not have such a big impact on performance, at most only one of their bodies gets executed // implemented like this because I am too lazy to rewrite it // say no to vibe coding or anythin similar
+void print_treasure ( TREASURE treasure, char **print, int *print_size )
+{
+  char string[PRINT_STRING_INCREMENT];
+  string[0] = '\0';
+  
+  sprintf ( string, "__________________________________________________\n" );
+  if ( *print_size <= strlen ( *print ) + strlen ( string ) + 1 ) // to include '\0'
+    {
+      *print_size += PRINT_STRING_INCREMENT;
+      *print = realloc ( *print, *print_size * sizeof ( char ) );
+
+      if ( *print == NULL )
+	{
+	  printf ( "Eroare la realocare print string\n" );
+	  // return 1;
+	}
+    }
+  strcat ( *print, string );
+  
+  sprintf ( string, "\tTreasure ID: %s\n", treasure.id );
+  if ( *print_size <= strlen ( *print ) + strlen ( string ) + 1 ) // to include '\0'
+    {
+      *print_size += PRINT_STRING_INCREMENT;
+      *print = realloc ( *print, *print_size * sizeof ( char ) );
+
+      if ( *print == NULL )
+	{
+	  printf ( "Eroare la realocare print string\n" );
+	  // return 1;
+	}
+    }
+  strcat ( *print, string );
+  
+  sprintf ( string, "\tTreasure user: %s\n", treasure.user_name );
+  if ( *print_size <= strlen ( *print ) + strlen ( string ) + 1 ) // to include '\0'
+    {
+      *print_size += PRINT_STRING_INCREMENT;
+      *print = realloc ( *print, *print_size * sizeof ( char ) );
+
+      if ( *print == NULL )
+	{
+	  printf ( "Eroare la realocare print string\n" );
+	  // return 1;
+	}
+    }
+  strcat ( *print, string );
+  
+  sprintf ( string, "\tTreasure clue: %s\n", treasure.clue_text );
+  if ( *print_size <= strlen ( *print ) + strlen ( string ) + 1 ) // to include '\0'
+    {
+      *print_size += PRINT_STRING_INCREMENT;
+      *print = realloc ( *print, *print_size * sizeof ( char ) );
+
+      if ( *print == NULL )
+	{
+	  printf ( "Eroare la realocare print string\n" );
+	  // return 1;
+	}
+    }
+  strcat ( *print, string );
+  
+  sprintf ( string, "\tTreasure value: %d\n", treasure.value );
+  if ( *print_size <= strlen ( *print ) + strlen ( string ) + 1 ) // to include '\0'
+    {
+      *print_size += PRINT_STRING_INCREMENT;
+      *print = realloc ( *print, *print_size * sizeof ( char ) );
+
+      if ( *print == NULL )
+	{
+	  printf ( "Eroare la realocare print string\n" );
+	  // return 1;
+	}
+    }
+  strcat ( *print, string );
+  
+  sprintf ( string, "\tTreasure coordinates: latitude: %f | longitude: %f\n", treasure.latitude, treasure.longitude );
+  if ( *print_size <= strlen ( *print ) + strlen ( string ) + 1 ) // to include '\0'
+    {
+      *print_size += PRINT_STRING_INCREMENT;
+      *print = realloc ( *print, *print_size * sizeof ( char ) );
+
+      if ( *print == NULL )
+	{
+	  printf ( "Eroare la realocare print string\n" );
+	  // return 1;
+	}
+    }
+  strcat ( *print, string );
+  
+  sprintf ( string, "\n" );
+  if ( *print_size <= strlen ( *print ) + strlen ( string ) + 1 ) // to include '\0'
+    {
+      *print_size += PRINT_STRING_INCREMENT;
+      *print = realloc ( *print, *print_size * sizeof ( char ) );
+
+      if ( *print == NULL )
+	{
+	  printf ( "Eroare la realocare print string\n" );
+	  // return 1;
+	}
+    }
+  strcat ( *print, string );
 }
 
 // function to get file_descriptor for said file ( determined by char **order: 0-root, final-file )
@@ -118,13 +229,43 @@ int get_log_file_descriptor ( const char *hunt_id, int create_file_flag ) // spe
 
 // list hunt function
 
-int list_hunt ( const char hunt_id[HUNT_ID_SIZE] )
+int list_hunt ( const char hunt_id[HUNT_ID_SIZE], int pipe_id, int hub_id )
 {
   struct stat statbuf;
 
+  int print_size = PRINT_STRING_INCREMENT; // used to remember print buffer maximum size // for no memory leaks
+  char *print = ( char * ) malloc ( print_size * sizeof ( char ) ); // buffer for pipe
+  char string[PRINT_STRING_INCREMENT]; // string concatenated repeatedly to print buffer
+
+  if ( print == NULL )
+    {
+      printf ( "Eroare la alocare print string\n" );
+      return 1;
+    }
+
+  print[0] = '\0';
+  string[0] = '\0';
+
   if ( stat ( hunt_id, &statbuf ) == -1 ) // to make sure there is specified hunt and extract meta-data
     {
-      printf ( "Nu a fost gasit hunt ID: %s\n", hunt_id );
+      sprintf ( string, "Nu a fost gasit hunt ID: %s\n", hunt_id );
+      if ( print_size <= strlen ( print ) + strlen ( string ) + 1 ) // to include '\0'
+	{
+	  print_size += PRINT_STRING_INCREMENT;
+	  print = realloc ( print, print_size * sizeof ( char ) );
+	  
+	  if ( print == NULL )
+	    {
+	      printf ( "Eroare la realocare print string\n" );
+	      return 1;
+	    }
+	}
+      strcat ( print, string );
+
+      print_procedure ( pipe_id, print, print_size, hub_id );
+
+      free ( print );
+      
       return 0;
     }
 
@@ -142,6 +283,7 @@ int list_hunt ( const char hunt_id[HUNT_ID_SIZE] )
   if ( strings == NULL )
     {
       printf ( "Eroare la creare parametru strings pentru filepath\n" );
+      free ( print );
       return 1;
     }
 
@@ -152,6 +294,8 @@ int list_hunt ( const char hunt_id[HUNT_ID_SIZE] )
   if ( strings[0] == NULL || strings[1] == NULL || strings[2] == NULL )
     {
       printf ( "Eroare la creare parametru strings pentru filepath\n" );
+
+      free ( print );
       
       if ( strings[0] != NULL )
 	free ( strings[0] );
@@ -179,19 +323,73 @@ int list_hunt ( const char hunt_id[HUNT_ID_SIZE] )
   if ( stat ( filepath, &statbuf ) == -1 ) // to make sure there is treasure.data and extract meta-data
     {
       printf ( "Nu a fost gasit treasure.data\n" );
+      free ( print );
       return 0;
     }
 
-  printf ( "Printing hunt:\n" );
-  printf ( "Hunt name: %s\n", hunt_id );
-  printf ( "Total data file size: %lu bytes\n", ( uint64_t ) statbuf.st_size ); // %lu may not work on 32 bit systems as intended; written for 64 bit systems to not get warning
-  printf ( "Last time modified: %s\n", ctime ( &statbuf.st_mtime ) ); // converts time into string format
+  sprintf ( string, "Printing hunt:\n" );
+  if ( print_size <= strlen ( print ) + strlen ( string ) + 1 ) // to include '\0'
+    {
+      print_size += PRINT_STRING_INCREMENT;
+      print = realloc ( print, print_size * sizeof ( char ) );
+
+      if ( print == NULL )
+	{
+	  printf ( "Eroare la realocare print string\n" );
+	  return 1;
+	}
+    }
+  strcat ( print, string );
+  
+  sprintf ( string, "Hunt name: %s\n", hunt_id );
+  if ( print_size <= strlen ( print ) + strlen ( string ) + 1 ) // to include '\0'
+    {
+      print_size += PRINT_STRING_INCREMENT;
+      print = realloc ( print, print_size * sizeof ( char ) );
+
+      if ( print == NULL )
+	{
+	  printf ( "Eroare la realocare print string\n" );
+	  return 1;
+	}
+    }
+  strcat ( print, string );
+  
+  sprintf ( string, "Total data file size: %lu bytes\n", ( uint64_t ) statbuf.st_size ); // %lu may not work on 32 bit systems as intended; written for 64 bit systems to not get warning
+  if ( print_size <= strlen ( print ) + strlen ( string ) + 1 ) // to include '\0'
+    {
+      print_size += PRINT_STRING_INCREMENT;
+      print = realloc ( print, print_size * sizeof ( char ) );
+
+      if ( print == NULL )
+	{
+	  printf ( "Eroare la realocare print string\n" );
+	  return 1;
+	}
+    }
+  strcat ( print, string );
+  
+  sprintf ( string, "Last time modified: %s\n", ctime ( &statbuf.st_mtime ) ); // converts time into string format
+  if ( print_size <= strlen ( print ) + strlen ( string ) + 1 ) // to include '\0'
+    {
+      print_size += PRINT_STRING_INCREMENT;
+      print = realloc ( print, print_size * sizeof ( char ) );
+
+      if ( print == NULL )
+	{
+	  printf ( "Eroare la realocare print string\n" );
+	  return 1;
+	}
+    }
+  strcat ( print, string );
+  
 
   int file_descriptor = get_file_descriptor ( 3, strings, O_RDONLY );
 
   if ( file_descriptor < 0 )
     {
       printf ( "Eroare la creare file_descriptor\n" );
+      free ( print );
       free ( strings[0] ); free ( strings[1] ); free ( strings[2] ); free ( strings );
       return 1;
     }
@@ -218,6 +416,7 @@ int list_hunt ( const char hunt_id[HUNT_ID_SIZE] )
       if ( bytes_read % sizeof ( TREASURE ) ) // a treasure read was incomplete
 	{
 	  printf ( "Treasure read was incomplete\n" );
+	  free ( print );
 	  free ( strings[0] ); free ( strings[1] ); free ( strings[2] ); free ( strings );
 	  close ( file_descriptor );
 	  return 1;
@@ -227,9 +426,8 @@ int list_hunt ( const char hunt_id[HUNT_ID_SIZE] )
       
       elements_read = bytes_read / sizeof ( TREASURE );
       for ( uint32_t i = 0; i < elements_read; i++ )
-	print_treasure ( buffer[i] );
+	print_treasure ( buffer[i], &print, &print_size );
     }
-
   free ( strings[0] ); free ( strings[1] ); free ( strings[2] ); free ( strings ); 
   close ( file_descriptor );
 
@@ -239,22 +437,58 @@ int list_hunt ( const char hunt_id[HUNT_ID_SIZE] )
       return 1;
     }
 
+  print_procedure ( pipe_id, print, print_size, hub_id );
+
+  free ( print );
+
   return 0;
 }
 
-int view_treasure ( const char hunt_id[HUNT_ID_SIZE], const char treasure_id[TREASURE_ID_SIZE] )
+int view_treasure ( const char hunt_id[HUNT_ID_SIZE], const char treasure_id[TREASURE_ID_SIZE], int pipe_id, int hub_id )
 {
   struct stat statbuf;
 
+  int print_size = PRINT_STRING_INCREMENT; // used to remember print buffer maximum size // for no memory leaks
+  char *print = ( char * ) malloc ( print_size * sizeof ( char ) ); // buffer for pipe
+  char string[PRINT_STRING_INCREMENT]; // string concatenated repeatedly to print buffer
+
+  if ( print == NULL )
+    {
+      printf ( "Eroare la alocare print string\n" );
+      return 1;
+    }
+
+  print[0] = '\0';
+  string[0] = '\0';
+
   if ( stat ( hunt_id, &statbuf ) == -1 ) // to make sure there is specified hunt and extract meta-data
     {
-      printf ( "Nu a fost gasit hunt ID: %s\n", hunt_id );
+      sprintf ( string, "Nu a fost gasit hunt ID: %s\n", hunt_id );
+      
+      if ( print_size <= strlen ( print ) + strlen ( string ) + 1 ) // to include '\0'
+	{
+	  print_size += PRINT_STRING_INCREMENT;
+	  print = realloc ( print, print_size * sizeof ( char ) );
+	  
+	  if ( print == NULL )
+	    {
+	      printf ( "Eroare la realocare print string\n" );
+	      return 1;
+	    }
+	}
+      strcat ( print, string );
+
+      print_procedure ( pipe_id, print, print_size, hub_id );
+
+      free ( print );
+      
       return 0;
     }
 
   if ( !S_ISDIR ( statbuf.st_mode ) ) // to make sure hunt is a folder (correct representation in memory)
     {
       printf ( "%s nu este reprezentat in memorie corect\n", hunt_id );
+      free ( print );
       return 1;
     }
 
@@ -266,6 +500,7 @@ int view_treasure ( const char hunt_id[HUNT_ID_SIZE], const char treasure_id[TRE
   if ( strings == NULL )
     {
       printf ( "Eroare la creare parametru strings pentru filepath\n" );
+      free ( print );
       return 1;
     }
 
@@ -276,6 +511,8 @@ int view_treasure ( const char hunt_id[HUNT_ID_SIZE], const char treasure_id[TRE
   if ( strings[0] == NULL || strings[1] == NULL || strings[2] == NULL )
     {
       printf ( "Eroare la creare parametru strings pentru filepath\n" );
+
+      free ( print );
       
       if ( strings[0] != NULL )
 	free ( strings[0] );
@@ -298,6 +535,7 @@ int view_treasure ( const char hunt_id[HUNT_ID_SIZE], const char treasure_id[TRE
   if ( file_descriptor < 0 )
     {
       printf ( "Eroare la creare file_descriptor\n" );
+      free ( print );
       free ( strings[0] ); free ( strings[1] ); free ( strings[2] ); free ( strings );
       return 1;
     }
@@ -322,6 +560,7 @@ int view_treasure ( const char hunt_id[HUNT_ID_SIZE], const char treasure_id[TRE
       if ( bytes_read % sizeof ( TREASURE ) ) // a treasure read was incomplete
 	{
 	  printf ( "Treasure read was incomplete\n" );
+	  free ( print );
 	  free ( strings[0] ); free ( strings[1] ); free ( strings[2] ); free ( strings );
 	  close ( file_descriptor );
 	  return 1;
@@ -333,23 +572,45 @@ int view_treasure ( const char hunt_id[HUNT_ID_SIZE], const char treasure_id[TRE
       for ( uint32_t i = 0; i < elements_read; i++ )
 	if ( strcmp ( buffer[i].id, treasure_id ) == 0 )
 	  {
-	    print_treasure ( buffer[i] );
+	    print_treasure ( buffer[i], &print, &print_size );
+
+	    print_procedure ( pipe_id, print, print_size, hub_id );
+
+	    free ( print );
 	    free ( strings[0] ); free ( strings[1] ); free ( strings[2] ); free ( strings );
 	    close ( file_descriptor );
 	    return 0;
 	  }
     }
-
+  
   free ( strings[0] ); free ( strings[1] ); free ( strings[2] ); free ( strings ); 
   close ( file_descriptor );
 
   if ( bytes_read < 0 )
     {
       printf ( "Eroare la citire in buffer\n" );
+      free ( print );
       return 1;
     }
 
-  printf ( "Nu a fost gasit treasure ID: %s\n", treasure_id );
+  sprintf ( string, "Nu a fost gasit treasure ID: %s\n", treasure_id );
+  
+  if ( print_size <= strlen ( print ) + strlen ( string ) + 1 ) // to include '\0'
+    {
+      print_size += PRINT_STRING_INCREMENT;
+      print = realloc ( print, print_size * sizeof ( char ) );
+
+      if ( print == NULL )
+	{
+	  printf ( "Eroare la realocare print string\n" );
+	  return 1;
+	}
+    }
+  strcat ( print, string );
+
+  print_procedure ( pipe_id, print, print_size, hub_id );
+
+  free ( print );
 
   return 0;
 }
@@ -839,7 +1100,7 @@ int remove_hunt ( const char hunt_id[HUNT_ID_SIZE] )
   return 0;
 }
 
-int list_all_hunts()
+int list_all_hunts ( int pipe_id, int hub_id )
 {
   int flag_no_hunt_found = 1;
   
@@ -852,7 +1113,33 @@ int list_all_hunts()
       return 1;
     }
 
-  printf ( "Printing all hunts:\n" );
+  int print_size = PRINT_STRING_INCREMENT; // used to remember print buffer maximum size // for no memory leaks
+  char *print = ( char * ) malloc ( print_size * sizeof ( char ) ); // buffer for pipe
+  char string[PRINT_STRING_INCREMENT]; // string concatenated repeatedly to print buffer
+
+  if ( print == NULL )
+    {
+      printf ( "Eroare la alocare print string\n" );
+      return 1;
+    }
+
+  print[0] = '\0';
+  string[0] = '\0';
+
+  sprintf ( string, "Printing all hunts:\n" );
+  
+  if ( print_size <= strlen ( print ) + strlen ( string ) + 1 ) // to include '\0'
+    {
+      print_size += PRINT_STRING_INCREMENT;
+      print = realloc ( print, print_size * sizeof ( char ) );
+
+      if ( print == NULL )
+	{
+	  printf ( "Eroare la realocare print string\n" );
+	  return 1;
+	}
+    }
+  strcat ( print, string );
   
   while ( ( entry = readdir ( dir ) ) != NULL )
     {
@@ -871,14 +1158,27 @@ int list_all_hunts()
       if ( stat ( fullpath, &statbuf ) != 0 )
 	{
 	  printf ( "Eroare la stat intrare in folder curent\n" );
+	  free ( print );
 	  return 1;
 	}
       
       if ( S_ISDIR ( statbuf.st_mode ) )
 	{
 	  flag_no_hunt_found = 0;
-	  printf("\tHUNT: %s | ", entry->d_name);
+	  sprintf( string, "\tHUNT: %s | ", entry->d_name );
 
+	  if ( print_size <= strlen ( print ) + strlen ( string ) + 1 ) // to include '\0'
+	    {
+	      print_size += PRINT_STRING_INCREMENT;
+	      print = realloc ( print, print_size * sizeof ( char ) );
+	      
+	      if ( print == NULL )
+		{
+		  printf ( "Eroare la realocare print string\n" );
+		  return 1;
+		}
+	    }
+	  strcat ( print, string );
 	  
 	  strcat ( fullpath, "/" );
 	  strcat ( fullpath, TREASURE_GENERAL_FILENAME );
@@ -886,17 +1186,61 @@ int list_all_hunts()
 	  if ( stat ( fullpath, &statbuf ) != 0 )
 	    {
 	      printf ( "\n\tEroare la deschidere treasure data file in Hunt\n" );
+	      free ( print );
 	      return 1;
 	    }
 
-	  printf ( "Number of treasures: %lu\n", ( uint64_t ) statbuf.st_size / sizeof ( TREASURE ) );
+	  sprintf ( string, "Number of treasures: %lu\n", ( uint64_t ) statbuf.st_size / sizeof ( TREASURE ) );
+
+	  if ( print_size <= strlen ( print ) + strlen ( string ) + 1 ) // to include '\0'
+	    {
+	      print_size += PRINT_STRING_INCREMENT;
+	      print = realloc ( print, print_size * sizeof ( char ) );
+	      
+	      if ( print == NULL )
+		{
+		  printf ( "Eroare la realocare print string\n" );
+		  return 1;
+		}
+	    }
+	  strcat ( print, string );
 	}
     }
 
   if ( flag_no_hunt_found )
-    printf ( "\tNo hunts found\n" );
+    {
+      sprintf ( string, "\tNo hunts found\n" );
+      if ( print_size <= strlen ( print ) + strlen ( string ) + 1 ) // to include '\0'
+	{
+	  print_size += PRINT_STRING_INCREMENT;
+	  print = realloc ( print, print_size * sizeof ( char ) );
+	  
+	  if ( print == NULL )
+	    {
+	      printf ( "Eroare la realocare print string\n" );
+	      return 1;
+	    }
+	}
+      strcat ( print, string );
+    }
+  
+  sprintf ( string, "\n" );
+  if ( print_size <= strlen ( print ) + strlen ( string ) + 1 ) // to include '\0'
+    {
+      print_size += PRINT_STRING_INCREMENT;
+      print = realloc ( print, print_size * sizeof ( char ) );
 
-  printf ( "\n" );
+      if ( print == NULL )
+	{
+	  printf ( "Eroare la realocare print string\n" );
+	  return 1;
+	}
+    }
+  strcat ( print, string );
+
+  print_procedure ( pipe_id, print, print_size, hub_id );
+
+  free ( print );
   
   if ( closedir ( dir ) == -1 )
     {

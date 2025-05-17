@@ -9,12 +9,17 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <dirent.h>
+#include <signal.h>
 
 /*
   Treasure Manager system:
 
   Used macros can be later swapped for more dynamic solutions (especially for strings)
 */
+
+// printing through pipe macros
+#define DISK_BUFFER_SIZE 4096 // suma rotunda
+#define PRINT_STRING_INCREMENT 1024 // initial 4096, pot aparea probleme pe versiuni Linux <= 2.6
 
 // operations and command line macros
 
@@ -67,7 +72,9 @@ typedef struct // total size == 204 bytes
   char user_name[USER_NAME_SIZE], clue_text[CLUE_TEXT_SIZE];
 } TREASURE;
 
-void print_treasure ( TREASURE treasure );
+void print_procedure ( int pipe_id, char *print, int print_size, int hub_id );
+
+void print_treasure ( TREASURE treasure, char **print, int *print_size );
 
 // function to form string for filepath ( later to be used in open() function )
 
@@ -85,11 +92,11 @@ int get_log_file_descriptor ( const char *hunt_id, int create_file_flag );
 
 // list hunt function
 
-int list_hunt ( const char hunt_id[HUNT_ID_SIZE] );
+int list_hunt ( const char hunt_id[HUNT_ID_SIZE], int pipe_id, int hub_id );
 
 // view hunt function
 
-int view_treasure ( const char hunt_id[HUNT_ID_SIZE], const char treasure_id[TREASURE_ID_SIZE] );
+int view_treasure ( const char hunt_id[HUNT_ID_SIZE], const char treasure_id[TREASURE_ID_SIZE], int pipe_id, int hub_id );
 
 /*
   add <hunt_id>
@@ -113,4 +120,4 @@ int remove_hunt ( const char hunt_id[HUNT_ID_SIZE] );
 
 // function to list all hunts
 
-int list_all_hunts();
+int list_all_hunts ( int pipe_id, int hub_id );

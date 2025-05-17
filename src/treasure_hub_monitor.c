@@ -4,7 +4,28 @@
 
 #include "treasure_hub_monitor.h"
 
+// couldn't find more elegant solutions // that are still easy to maange in code
 int commands_file;
+char *pipe_id;
+
+void transform_int_to_string ( int integer, char *string )
+{
+  int i = 0, pow = 1;
+  
+  while ( pow <= integer ) // form base 10 mask
+    pow *= 10;
+  pow /= 10;
+
+  while ( pow )
+    {
+      string[i++] = integer / pow + '0';
+
+      integer %= pow;
+      pow /= 10;
+    }
+  
+  string[i++] = '\0';
+}
 
 void handle_SIGNAL_COMMAND ( int signal ) // SIGUSR1 used to fork and exec into normal hunt feature
 {
@@ -66,6 +87,15 @@ void handle_SIGNAL_COMMAND ( int signal ) // SIGUSR1 used to fork and exec into 
       token = strtok ( NULL, sep );
     } while ( token != NULL );
 
+  strcat ( args[++i], pipe_id ); // adds pipe id to treasure manager command line
+  // token reiteration not needed, already NULL
+
+  pid_t hub_id = getppid(); // get treasure hub ( parent ) process id
+  char hub_id_string[NUMBER_DIGITS_LIMIT];
+
+  transform_int_to_string ( hub_id, hub_id_string );
+  strcat ( args[++i], hub_id_string );
+
   for ( i = i + 1; i < COMMAND_MAX_NR_ARGS + 1; i++ )
     {
       if ( args[i] != NULL )
@@ -121,9 +151,11 @@ void handle_SIGNAL_TERMINATE ( int signal ) // SIGUSR2 used to terminate monitor
   exit ( 0 );
 }
 
-int main ( void )
+int main ( int argc, char **args )
 {
   // assign signal handling functions
+
+  pipe_id = args[1]; // pipe_id used in command for treasure manager program to give pipe to write to
   
   struct sigaction sa1;
   sa1.sa_handler = &handle_SIGNAL_COMMAND;

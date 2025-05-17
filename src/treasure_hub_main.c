@@ -8,7 +8,29 @@
 #include "treasure_hub_monitor.h"
 
 // flag to remember if monitor is active or not
-int flag_monitor_active; // not exactly elegant, couldn't find a better way to make it work
+int flag_monitor_active; // not exactly elegant, couldn't find a better way to make it work // while still maintanable
+int pipe_print[2]; // pipe to get the printable results // 0 - read | 1 - write
+
+char pipe_buffer[DISK_BUFFER_SIZE + 1]; // buffer in which operations results are stored
+
+void transform_int_to_string ( int integer, char *string )
+{
+  int i = 0, pow = 1;
+  
+  while ( pow <= integer ) // form base 10 mask
+    pow *= 10;
+  pow /= 10;
+
+  while ( pow )
+    {
+      string[i++] = integer / pow + '0';
+
+      integer %= pow;
+      pow /= 10;
+    }
+  
+  string[i++] = '\0';
+}
 
 MONITOR_COMMAND menu ( char *command_line )
 {
@@ -97,15 +119,38 @@ void handle_SIGCHLD ( int signal ) // requires child to send SIGCHLD on terminat
   flag_monitor_active = 0;
 }
 
+void handle_SIGUSR1 ( int signal ) // handle of the print signal // used SIGUSR1
+{
+  pipe_buffer[DISK_BUFFER_SIZE] = '\0'; // needed for large printable data sets
+
+  if ( read ( pipe_print[0], pipe_buffer, DISK_BUFFER_SIZE ) < 0 )
+    {
+      printf ( "Eroare la citire din pipe la semnal\n" );
+      return;
+    }
+
+  printf ( "%s", pipe_buffer );
+}
+
 int main ( void )
 {
+  if ( pipe ( pipe_print ) != 0 )
+    {
+      printf ( "Eroare la creare print pipe\n" );
+      exit ( -1 );
+    }
+
+  close ( pipe_print[1] ); // closes write end of pipe
+  
+  char pipe_print_write[NUMBER_DIGITS_LIMIT + 1];
+  transform_int_to_string ( pipe_print[1], pipe_print_write );
+  
   int commands_file = open ( COMMANDS_FILENAME, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR ); // always reset the file to empty-file
 
   if ( commands_file == -1 )
     {
       printf ( "Eroare la creare fisier comenzi -- hub-level\n" );
-      
-      exit ( 1 );
+      exit ( -2 );
     }
   
   char command_line[MONITOR_COMMAND_MAX_SIZE];
@@ -118,12 +163,17 @@ int main ( void )
   sa.sa_handler = &handle_SIGCHLD;
   sigemptyset ( &sa.sa_mask );
   sa.sa_flags = SA_RESTART | SA_NOCLDSTOP;  // SA_RESTART evita întreruperea apelurilor blocante
+
+  struct sigaction sa_print;
+  sa_print.sa_handler = &handle_SIGCHLD;
+  sigemptyset ( &sa_print.sa_mask );
+  sa_print.sa_flags = SA_RESTART | SA_NOCLDSTOP;  // SA_RESTART evita întreruperea apelurilor blocante
   
   if ( sigaction ( SIGCHLD, &sa, NULL ) == -1 )
     {
       printf ( "Eroare la alocare sigaction -- hub level\n" );
       close ( commands_file );
-      exit ( 1 ) ;
+      exit ( -3 ) ;
     }
   
   while ( ( opt = menu ( command_line ) ) != OTHER ) // should go on forever (the condition)
@@ -163,15 +213,15 @@ int main ( void )
 		  
 		  if ( pid_monitor == 0 ) // monitor ( child ) process
 		    {
-		      execlp ( MONITOR_PROGRAM_LAUNCH, MONITOR_PROGRAM_LAUNCH, NULL );
+		      execlp ( MONITOR_PROGRAM_LAUNCH, MONITOR_PROGRAM_LAUNCH, pipe_print_write, NULL );
 
 		      printf ( "Eroare la create monitor process -- exec -- %d\n", errno );
 		    }
 		  else // hub ( parent ) process
 		    {
 		      flag_monitor_active = 1;
-		      printf ( "Monitor started as process %d\n", pid_monitor ); // for debug
-		      // printf ( "Monitor started\n" ); // for final draft
+		      // printf ( "Monitor started as process %d\n", pid_monitor ); // for debug
+		      printf ( "Monitor started\n" ); // for final draft
 		    }
 		}
 	    }

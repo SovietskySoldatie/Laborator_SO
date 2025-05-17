@@ -2,7 +2,7 @@
 
 int main ( int argc, char **args )
 {
-  if ( argc != 2 && argc != 3 && argc != 4 ) // check number of arguments
+  if ( argc != 4 && argc != 5 && argc != 6 ) // check number of arguments
     {
       printf ( "Numar invalid de argumente\n" );
       exit ( -1 );
@@ -39,6 +39,9 @@ int main ( int argc, char **args )
 	break;
       }
 
+  int pipe_id = atoi ( args[argc - 2] ); // extract pipe id // not used for add and remove operations // treasure hub doesn't use them, specs do not state it should
+  int hub_id = atoi ( args[argc - 1] ); // extract hub pid // same adnotations
+
   int operation_succesful = 1; // should stay 1 for operation succesful, reset to 0 for not succesful operation
   // considered not succesful on error; succesful even on data not found
 
@@ -48,10 +51,11 @@ int main ( int argc, char **args )
     {
     case ADD_TREASURE:
       
-      if ( argc != 3 )
+      if ( argc != 2 )
 	{
 	  operation = OTHER;
 	  printf ( "Numar invalid de argumente pentru aceasta comanda\n" );
+	  break;
 	}
       
       operation_succesful -= add_treasure ( args[2] );
@@ -62,25 +66,27 @@ int main ( int argc, char **args )
 
     case LIST_ALL_HUNTS:
 
-      if ( argc != 2 )
+      if ( argc != 4 )
 	{
 	  operation = OTHER;
 	  printf ( "Numar invalid de argumente pentru aceasta comanda\n" );
+	  break;
 	}
 
-      operation_succesful -= list_all_hunts();
+      operation_succesful -= list_all_hunts ( pipe_id, hub_id );
 
       break;
       
     case LIST_HUNT:
       
-      if ( argc != 3 )
+      if ( argc != 5 )
 	{
 	  operation = OTHER;
 	  printf ( "Numar invalid de argumente pentru aceasta comanda\n" );
+	  break;
 	}
       
-      operation_succesful -= list_hunt ( args[2] );
+      operation_succesful -= list_hunt ( args[2], pipe_id, hub_id );
       
       log_file_descriptor = get_log_file_descriptor ( args[2], ~CREATE_FILE );
       
@@ -88,10 +94,11 @@ int main ( int argc, char **args )
       
     case VIEW_TREASURE:
       
-      if ( argc != 4 )
+      if ( argc != 6 )
 	{
 	  operation = OTHER;
 	  printf ( "Numar invalid de argumente pentru aceasta comanda\n" );
+	  break;
 	}
       
       if ( strlen ( args[3] ) >= TREASURE_ID_SIZE ) // check that args[3] can be a valid treasure_id
@@ -100,7 +107,7 @@ int main ( int argc, char **args )
 	  exit ( -1 );
 	}
       
-      operation_succesful -= view_treasure ( args[2], args[3] );
+      operation_succesful -= view_treasure ( args[2], args[3], pipe_id, hub_id );
       
       log_file_descriptor = get_log_file_descriptor ( args[2], ~CREATE_FILE );
       
@@ -112,6 +119,7 @@ int main ( int argc, char **args )
 	{
 	  operation = OTHER;
 	  printf ( "Numar invalid de argumente pentru aceasta comanda\n" );
+	  break;
 	}
       
       if ( strlen ( args[3] ) >= TREASURE_ID_SIZE ) // check that args[3] can be a valid treasure_id
@@ -132,6 +140,7 @@ int main ( int argc, char **args )
 	{
 	  operation = OTHER;
 	  printf ( "Numar invalid de argumente pentru aceasta comanda\n" );
+	  break;
 	}
       
       operation_succesful -= remove_hunt ( args[2] );
