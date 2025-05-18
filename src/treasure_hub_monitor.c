@@ -40,7 +40,7 @@ void handle_SIGNAL_COMMAND ( int signal ) // SIGUSR1 used to fork and exec into 
       exit ( 1 );
     }
 
-  command_line[bytes_read + 1] = '\0'; // just to be sure
+  command_line[bytes_read] = '\0'; // just to be sure
 
   if ( command_line[strlen ( command_line ) - 1] == '\n' )
     command_line[strlen ( command_line ) - 1] = '\0';
@@ -96,6 +96,8 @@ void handle_SIGNAL_COMMAND ( int signal ) // SIGUSR1 used to fork and exec into 
   transform_int_to_string ( hub_id, hub_id_string );
   strcat ( args[++i], hub_id_string );
 
+  // int reached_value = i;
+
   for ( i = i + 1; i < COMMAND_MAX_NR_ARGS + 1; i++ )
     {
       if ( args[i] != NULL )
@@ -103,7 +105,7 @@ void handle_SIGNAL_COMMAND ( int signal ) // SIGUSR1 used to fork and exec into 
       args[i] = NULL;
     }
 
-  /*
+  
   printf ( "\n\tDebug monitor args[]:\n" );
 
   // debug reasons
@@ -115,11 +117,19 @@ void handle_SIGNAL_COMMAND ( int signal ) // SIGUSR1 used to fork and exec into 
 	printf ( "\t\t%s\n", "NULL" );
     }
   printf ( "\n" );
-  */
+  
 
   if ( args[COMMAND_MAX_NR_ARGS] != NULL && i == COMMAND_MAX_NR_ARGS ) // hardcoded because IDK why it doesn't work
     free ( args[COMMAND_MAX_NR_ARGS] );
   args[COMMAND_MAX_NR_ARGS] = NULL;
+
+  /*
+  printf ( "DEBUG\n" );
+  printf ( "%d %d %d\n", reached_value, i, COMMAND_MAX_NR_ARGS + 1 );
+  for ( i = 0; i < COMMAND_MAX_NR_ARGS + 1; i++ )
+    printf ( "%s\n", args[i] != NULL ? args[i] : "NULL" );
+  printf ( "END DEBUG\n" );
+  */
   
 
   pid_t pid_treasure_manager = fork();
@@ -153,6 +163,14 @@ void handle_SIGNAL_TERMINATE ( int signal ) // SIGUSR2 used to terminate monitor
 
 int main ( int argc, char **args )
 {
+  /*
+  printf ( "MONITOR DEBUG\n" );
+  printf ( "%d\n", argc );
+  for ( int i = 0; i < argc; i++ )
+    printf ( "%s\n", args[i] );
+  printf ( "END DEBUG\n" );
+  */
+  
   // assign signal handling functions
 
   pipe_id = args[1]; // pipe_id used in command for treasure manager program to give pipe to write to

@@ -144,6 +144,8 @@ int main ( void )
   
   char pipe_print_write[NUMBER_DIGITS_LIMIT + 1];
   transform_int_to_string ( pipe_print[1], pipe_print_write );
+
+  // printf ( "DEBUG HUB\n%d %s %d\nENDDEBUG\n", pipe_print[0], pipe_print_write, pipe_print[1] );
   
   int commands_file = open ( COMMANDS_FILENAME, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR ); // always reset the file to empty-file
 
