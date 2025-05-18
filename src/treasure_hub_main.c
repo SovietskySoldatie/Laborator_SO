@@ -34,6 +34,7 @@ void transform_int_to_string ( int integer, char *string )
 
 MONITOR_COMMAND menu ( char *command_line )
 {
+  usleep ( SECOND_TO_MICROSECONDS );
   MONITOR_COMMAND ret = OTHER;
 
   printf ( "\n__________________________________________\n" );
@@ -119,7 +120,7 @@ MONITOR_COMMAND menu ( char *command_line )
   return ret;
 }
 
-void handle_SIGCHLD ( int signal ) // requires child to send SIGCHLD on termination
+void handle_SIGUSR2 ( int signal ) // requires child to send SIGCHLD on termination
 {
   flag_monitor_active = 0;
 }
@@ -171,7 +172,7 @@ int main ( void )
   flag_monitor_active = 0;
 
   struct sigaction sa;
-  sa.sa_handler = &handle_SIGCHLD;
+  sa.sa_handler = &handle_SIGUSR2;
   sigemptyset ( &sa.sa_mask );
   sa.sa_flags = SA_RESTART | SA_NOCLDSTOP;  // SA_RESTART evita întreruperea apelurilor blocante
 
@@ -180,7 +181,7 @@ int main ( void )
   sigemptyset ( &sa_print.sa_mask );
   sa_print.sa_flags = SA_RESTART | SA_NOCLDSTOP;  // SA_RESTART evita întreruperea apelurilor blocante
   
-  if ( sigaction ( SIGCHLD, &sa, NULL ) == -1 )
+  if ( sigaction ( SIGUSR2, &sa, NULL ) == -1 )
     {
       printf ( "Eroare la alocare sigaction monitor dies -- hub level\n" );
       close ( commands_file );
@@ -482,6 +483,7 @@ int main ( void )
 			}
 		      else
 			{
+			  int current_pid = getpid(); // get pid of hub before fork()
 			  pid_t calculate_score_pid = fork();
 
 			  if ( calculate_score_pid == -1 )
@@ -494,7 +496,6 @@ int main ( void )
 			  if ( calculate_score_pid == 0 ) // calculate score ( child ) process
 			    {
 			      char current_pid_string[NUMBER_DIGITS_LIMIT];
-			      int current_pid = getpid();
 			      transform_int_to_string ( current_pid, current_pid_string );
 			      
 			      execlp ( CALCULATE_SCORE_PROGRAM_LAUNCH, CALCULATE_SCORE_PROGRAM_LAUNCH, fullpath, pipe_print_write, current_pid_string, NULL );
@@ -502,7 +503,9 @@ int main ( void )
 			      opt = OTHER;
 			      continue;
 			    }
-			  usleep ( SECOND_TO_MICROSECONDS );
+			  
+			  int status;
+			  waitpid(calculate_score_pid, &status, 0);
 			}
 		    }
 		}
@@ -528,6 +531,7 @@ int main ( void )
 	  
 	  break;
 	}
+      
     }
 
  EXIT_LOOP:

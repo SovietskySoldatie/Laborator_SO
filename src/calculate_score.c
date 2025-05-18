@@ -43,7 +43,7 @@ int check_for_pos ( TREASURE elem, USER_SCORE *array, int size )
 
 int main ( int argc, char **args )
 {
-  // printf ( "DEBUG Enters calculate_score for %s\n", args[1] );
+  // printf ( "DEBUG Enters calculate_score for %s %s %s\n", args[1], args[2], args[3] );
   
   int pipe_id = atoi ( args[2] ), hub_id = atoi ( args[3] ); // get pipe and hub for print
 
@@ -151,6 +151,8 @@ int main ( int argc, char **args )
     }
 
   free ( array_score );
+
+  // printf ( "DEBUG PRINT:\n%s\nEND DEBUG PRINT\n", print );
 
   print_procedure ( pipe_id, print, print_size, hub_id );
 

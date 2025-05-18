@@ -159,6 +159,7 @@ void handle_SIGNAL_COMMAND ( int signal ) // SIGUSR1 used to fork and exec into 
 void handle_SIGNAL_TERMINATE ( int signal ) // SIGUSR2 used to terminate monitor (this) process
 {
   close ( commands_file );
+  kill ( ( int ) getppid(), SIGUSR2 );
   exit ( 0 );
 }
 
@@ -212,6 +213,8 @@ int main ( int argc, char **args )
     }
 
   while ( 1 ); // idle state of process
+
+  kill ( ( int ) getppid(), SIGUSR2 );
 
   return 0;
 }
