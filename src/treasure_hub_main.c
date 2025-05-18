@@ -42,6 +42,7 @@ MONITOR_COMMAND menu ( char *command_line )
   printf ( "list_hunts\n" );
   printf ( "list_treasures\n" );
   printf ( "view_treasure\n" );
+  printf ( "calculate_score\n" );
   printf ( "stop_monitor\n" );
   printf ( "exit\n" );
 
@@ -102,6 +103,10 @@ MONITOR_COMMAND menu ( char *command_line )
       else if ( strcmp ( token, "view_treasure" ) == 0 )
 	{
 	  ret = VIEW_TREASURE;
+	}
+      else if ( strcmp ( token, "calculate_score" ) == 0 )
+	{
+	  ret = CALCULATE_SCORE;
 	}
       else
 	{
@@ -421,6 +426,100 @@ int main ( void )
 	    }
 	  
 	  break;
+
+	case CALCULATE_SCORE:
+
+	  if ( strcmp ( command_line, "calculate_score" ) == 0 )
+	    {
+	      int flag_no_hunt_found = 1;
+	      
+	      DIR *dir = opendir ( CURRENT_FOLDER ); // DIR struct already exists :D
+	      DIRENT *entry;
+	      
+	      if ( dir == NULL )
+		{
+		  printf ( "Eroare la deschiderea directorului curent\n" );
+		  opt = OTHER;
+		  continue;
+		}
+
+	      printf ( "Calculating score per hunt:\n" );
+
+	      while ( ( entry = readdir ( dir ) ) != NULL )
+		{
+		  if ( strcmp ( entry->d_name, CURRENT_FOLDER ) == 0 || strcmp ( entry->d_name, PREVIOUS_FOLDER ) == 0 ) // avoid "." and ".." folders
+		    continue;
+		  
+		  // evaluate current entry if is folder or not
+		  char fullpath[FULLPATH_MAX_SIZE];
+		  
+		  strcpy ( fullpath, CURRENT_FOLDER );
+		  strcat ( fullpath, "/" );
+		  strcat ( fullpath, entry->d_name );
+		  
+		  struct stat statbuf;
+		  
+		  if ( stat ( fullpath, &statbuf ) != 0 )
+		    {
+		      printf ( "Eroare la stat intrare in folder curent\n" );
+		      opt = OTHER;
+		      continue;
+		    }
+		  
+		  if ( S_ISDIR ( statbuf.st_mode ) )
+		    {
+		      flag_no_hunt_found = 0;
+		      printf( "\tHUNT: %s\n", entry->d_name );
+		      
+		      strcat ( fullpath, "/" );
+		      strcat ( fullpath, TREASURE_GENERAL_FILENAME );
+		      
+		      if ( stat ( fullpath, &statbuf ) != 0 )
+			{
+			  printf ( "\n\tEroare la deschidere treasure data file in Hunt\n" );
+			  opt = OTHER;
+			  continue;
+			}
+		      else
+			{
+			  pid_t calculate_score_pid = fork();
+
+			  if ( calculate_score_pid == -1 )
+			    {
+			      printf ( "Eroare la fork pentru calculate score\n" );
+			      opt = OTHER;
+			      continue;
+			    }
+
+			  if ( calculate_score_pid == 0 ) // calculate score ( child ) process
+			    {
+			      char current_pid_string[NUMBER_DIGITS_LIMIT];
+			      int current_pid = getpid();
+			      transform_int_to_string ( current_pid, current_pid_string );
+			      
+			      execlp ( CALCULATE_SCORE_PROGRAM_LAUNCH, CALCULATE_SCORE_PROGRAM_LAUNCH, fullpath, pipe_print_write, current_pid_string, NULL );
+			      printf ( "Eroare la exec pentru calculate score\n" );
+			      opt = OTHER;
+			      continue;
+			    }
+			  usleep ( SECOND_TO_MICROSECONDS );
+			}
+		    }
+		}
+
+	      if ( flag_no_hunt_found )
+		{
+		  printf ( "No hunts found\n" );
+		}
+	    }
+	  else
+	    {
+	      printf ( "Comanda invalida\n" );
+	      opt = OTHER;
+	      continue;
+	    }
+	  
+	  break;
 	  
 	default: // shouldn't reach this point
 	  
@@ -429,8 +528,6 @@ int main ( void )
 	  
 	  break;
 	}
-
-      usleep (  SECOND_TO_MICROSECONDS / 10 * 1 ); // to ensure menu waits for monitor to finish work
     }
 
  EXIT_LOOP:
