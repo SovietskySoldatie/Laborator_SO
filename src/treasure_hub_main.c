@@ -133,7 +133,7 @@ void handle_SIGUSR1 ( int signal ) // handle of the print signal // used SIGUSR1
     }
 
   printf ( "%s", pipe_buffer );
-  // printf ( "DEBUG\nExit Hub level print function %d\n", bytes_read );
+  printf ( "\nDEBUG\nExit Hub level print function %d\n", bytes_read );
 }
 
 int main ( void )

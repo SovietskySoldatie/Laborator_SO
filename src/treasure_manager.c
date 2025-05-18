@@ -9,9 +9,26 @@ void print_procedure ( int pipe_id, char *print, int print_size, int hub_id )
   // printf ( "\nDEBUG\n" );
   // printf ( "Reached print procedure\n" );
   int bytes_written, act_pointer = 0; // act_pointer used for pointer operations on print
+  int len = strlen ( print ); // save number of bytes that have to be written
+  print[len] = '\0';
 
+  while ( act_pointer <= len )
+    {
+      int bytes_should_be_written = -1; // how many bytes should be written
+      if ( act_pointer + PRINT_STRING_INCREMENT >= len )
+	bytes_should_be_written = strlen ( print + act_pointer ) + 1;
+      else
+	bytes_should_be_written = PRINT_STRING_INCREMENT;
+
+      bytes_written = write ( pipe_id, print + act_pointer, bytes_should_be_written );
+      
+      kill ( hub_id, SIGUSR1 );
+      act_pointer += bytes_written;
+    }
+
+  /*
   while ( ( bytes_written = write ( pipe_id, print + act_pointer, (
-						     act_pointer + PRINT_STRING_INCREMENT >= print_size // write (INCREMENT) would overflow the BUFFER
+						     act_pointer + PRINT_STRING_INCREMENT > print_size // write (INCREMENT) would overflow the BUFFER
 						     ) ? strlen ( print + act_pointer ) + 1 : PRINT_STRING_INCREMENT ) // because I would hate complicating with a flag
 	    ) > 0 )
     {
@@ -20,6 +37,7 @@ void print_procedure ( int pipe_id, char *print, int print_size, int hub_id )
       // printf ( "\tSent SIGUSR1 signal to %d process\n", hub_id );
       act_pointer += bytes_written;
     }
+  */
 
   /*
   bytes_written = write ( pipe_id, print + act_pointer, (
