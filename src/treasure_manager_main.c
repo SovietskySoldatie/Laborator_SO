@@ -2,11 +2,13 @@
 
 int main ( int argc, char **args )
 {
+  /*
   printf ( "MANAGER DEBUG\n" );
   printf ( "%d\n", argc );
   for ( int i = 0; i < argc; i++ )
     printf ( "%s\n", args[i] );
   printf ( "END DEBUG\n" );
+  */
   
   if ( argc != 4 && argc != 5 && argc != 6 ) // check number of arguments
     {

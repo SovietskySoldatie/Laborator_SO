@@ -6,19 +6,36 @@
 
 void print_procedure ( int pipe_id, char *print, int print_size, int hub_id )
 {
+  // printf ( "\nDEBUG\n" );
+  // printf ( "Reached print procedure\n" );
   int bytes_written, act_pointer = 0; // act_pointer used for pointer operations on print
 
-  while ( ( bytes_written = write ( pipe_id, print, (
-						     act_pointer + PRINT_STRING_INCREMENT > print_size // write (INCREMENT) would overflow the BUFFER
+  while ( ( bytes_written = write ( pipe_id, print + act_pointer, (
+						     act_pointer + PRINT_STRING_INCREMENT >= print_size // write (INCREMENT) would overflow the BUFFER
 						     ) ? strlen ( print + act_pointer ) + 1 : PRINT_STRING_INCREMENT ) // because I would hate complicating with a flag
 	    ) > 0 )
     {
+      // printf ( "\tWritten %d bytes to pipe %d\n", bytes_written, pipe_id );
       kill ( hub_id, SIGUSR1 );
+      // printf ( "\tSent SIGUSR1 signal to %d process\n", hub_id );
       act_pointer += bytes_written;
     }
+
+  /*
+  bytes_written = write ( pipe_id, print + act_pointer, (
+						     act_pointer + PRINT_STRING_INCREMENT >= print_size // write (INCREMENT) would overflow the BUFFER
+							 ) ? strlen ( print + act_pointer ) + 1 : PRINT_STRING_INCREMENT ); // because I would hate complicating with a flag
+  // printf ( "\tWritten %d bytes to pipe %d\n", bytes_written, pipe_id );
+  kill ( hub_id, SIGUSR1 );
+  // printf ( "\tSent SIGUSR1 signal to %d process\n", hub_id );
+  act_pointer += bytes_written;
+  */
   
   if ( bytes_written < 0 )
     printf ( "Eroare la scriere in pipe\n" );
+
+  // printf ( "Reached print procedure end of function\n" );
+  // printf ( "\nEND DEBUG\n" );
 }
 
 // reallocation ifs do not have such a big impact on performance, at most only one of their bodies gets executed // implemented like this because I am too lazy to rewrite it // say no to vibe coding or anythin similar

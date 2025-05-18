@@ -105,7 +105,7 @@ void handle_SIGNAL_COMMAND ( int signal ) // SIGUSR1 used to fork and exec into 
       args[i] = NULL;
     }
 
-  
+  /*
   printf ( "\n\tDebug monitor args[]:\n" );
 
   // debug reasons
@@ -117,6 +117,7 @@ void handle_SIGNAL_COMMAND ( int signal ) // SIGUSR1 used to fork and exec into 
 	printf ( "\t\t%s\n", "NULL" );
     }
   printf ( "\n" );
+  */
   
 
   if ( args[COMMAND_MAX_NR_ARGS] != NULL && i == COMMAND_MAX_NR_ARGS ) // hardcoded because IDK why it doesn't work

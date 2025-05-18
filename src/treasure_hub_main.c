@@ -121,15 +121,19 @@ void handle_SIGCHLD ( int signal ) // requires child to send SIGCHLD on terminat
 
 void handle_SIGUSR1 ( int signal ) // handle of the print signal // used SIGUSR1
 {
+  // printf ( "DEBUG\nEnter Hub level print function\n" );
   pipe_buffer[DISK_BUFFER_SIZE] = '\0'; // needed for large printable data sets
 
-  if ( read ( pipe_print[0], pipe_buffer, DISK_BUFFER_SIZE ) < 0 )
+  int bytes_read;
+
+  if ( ( bytes_read = read ( pipe_print[0], pipe_buffer, DISK_BUFFER_SIZE ) ) <= 0 )
     {
       printf ( "Eroare la citire din pipe la semnal\n" );
       return;
     }
 
   printf ( "%s", pipe_buffer );
+  // printf ( "DEBUG\nExit Hub level print function %d\n", bytes_read );
 }
 
 int main ( void )
@@ -140,7 +144,7 @@ int main ( void )
       exit ( -1 );
     }
 
-  close ( pipe_print[1] ); // closes write end of pipe
+  // close ( pipe_print[1] ); // closes write end of pipe
   
   char pipe_print_write[NUMBER_DIGITS_LIMIT + 1];
   transform_int_to_string ( pipe_print[1], pipe_print_write );
@@ -167,13 +171,20 @@ int main ( void )
   sa.sa_flags = SA_RESTART | SA_NOCLDSTOP;  // SA_RESTART evita întreruperea apelurilor blocante
 
   struct sigaction sa_print;
-  sa_print.sa_handler = &handle_SIGCHLD;
+  sa_print.sa_handler = &handle_SIGUSR1;
   sigemptyset ( &sa_print.sa_mask );
   sa_print.sa_flags = SA_RESTART | SA_NOCLDSTOP;  // SA_RESTART evita întreruperea apelurilor blocante
   
   if ( sigaction ( SIGCHLD, &sa, NULL ) == -1 )
     {
-      printf ( "Eroare la alocare sigaction -- hub level\n" );
+      printf ( "Eroare la alocare sigaction monitor dies -- hub level\n" );
+      close ( commands_file );
+      exit ( -3 ) ;
+    }
+  
+  if ( sigaction ( SIGUSR1, &sa_print, NULL ) == -1 )
+    {
+      printf ( "Eroare la alocare sigaction print -- hub level\n" );
       close ( commands_file );
       exit ( -3 ) ;
     }
@@ -424,6 +435,8 @@ int main ( void )
 
  EXIT_LOOP:
 
+  close ( pipe_print[0] );
+  close ( pipe_print[1] );
   close ( commands_file );
 
   // on exit() fnc call, all child processes should be terminated
